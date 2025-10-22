@@ -187,7 +187,7 @@ const OpenReadmeGrid = ({
     };
 
     return (
-        <div className={cn("max-w-7xl mx-auto px-4", space.className)}>
+        <div className={cn("w-full md:max-w-7xl mx-auto md:px-4", space.className)}>
             <div className="relative grid w-full grid-cols-12 gap-4 mx-auto mb-8">
                 {/* Hero/Name Card - Enhanced */}
                 <div className="col-span-12 row-span-2 md:col-span-4 lg:col-span-3 group">
