@@ -18,7 +18,7 @@ export default function Navbar() {
     };
 
     return (
-        <>
+        <div className="overflow-x-clip">
             <Block className="sticky top-0 z-50 flex items-center justify-between col-span-12 mb-8 leading-snug bg-secondary/30 backdrop-blur-md">
                 {/* Logo */}
                 <div className="flex items-center gap-4">
@@ -137,7 +137,7 @@ export default function Navbar() {
                                 About
                             </Link>
                             <Link
-                                href="https://github.com/ravixalgorithm/openreadme"
+                                href="https://github.com/open-dev-society/openreadme"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={closeMenu}
@@ -160,6 +160,6 @@ export default function Navbar() {
                     </div>
                 </>
             )}
-        </>
+        </div>
     );
 }
