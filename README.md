@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/badge/-Puppeteer-black?style=for-the-badge&logoColor=white&logo=puppeteer&color=40E0D0"/>
     <img src="https://img.shields.io/badge/-GitHub%20Actions-black?style=for-the-badge&logoColor=white&logo=githubactions&color=2088FF"/>
     <img src="https://img.shields.io/badge/-Chromium-black?style=for-the-badge&logoColor=white&logo=googlechrome&color=4285F4"/>
-    <img src="https://img.shields.io/badge/-Framer%20Motion-black?style=for-the-badge&logoColor=white&logo=framer&color=0055FF"/>
+    <img src="https://img.shields.io/badge/-Framer%20Motion-black?style=for-the-badge&logoColor=white&logo=ReadMe&color=0055FF"/>
   </div>
 </div>
 
