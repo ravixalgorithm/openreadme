@@ -168,40 +168,6 @@ pnpm build && pnpm start
 
 Open http://localhost:3000 to start creating your OpenReadme!
 
-## 🐳 Docker Setup
-
-Run OpenReadme easily with Docker for development and production.
-
-**Prerequisites**
-- Docker and Docker Compose installed
-- Environment variables configured
-
-**Quick Start with Docker**
-```bash
-# Clone the repository
-git clone https://github.com/Open-Dev-Society/openreadme.git
-cd openreadme
-
-# Create your .env file
-cp .env.example .env.local
-# Edit .env.local with your credentials
-
-# Build and run with Docker Compose
-docker-compose up --build
-```
-
-**Access the Application**
-- App: http://localhost:3000
-- Environment: Containerized Next.js application
-
-**Production Deployment**
-```bash
-# Build production image
-docker build -t openreadme:latest .
-
-# Run production container
-docker run -p 3000:3000 --env-file .env.local openreadme:latest
-```
 
 ## 🔐 Environment Variables
 
