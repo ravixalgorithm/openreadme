@@ -1,0 +1,16 @@
+{
+  "name": "OpenReadme",
+  "short_name": "OpenReadme",
+  "description": "A beautiful GitHub readme generator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff1744",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
