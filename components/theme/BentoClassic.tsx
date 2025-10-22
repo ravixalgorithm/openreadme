@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 /*bento1.tsx*/
 import { useState } from "react";
 import { Space_Grotesk } from "next/font/google";
@@ -42,6 +43,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { generateRandomString } from "@/utils/calculations";
 import { TextShimmer } from "../ui/text-shimmer";
+import { User, Zap } from "lucide-react";
 
 const randomId = generateRandomString(5);
 

@@ -18,3 +18,6 @@ export function Block({ as: Comp = "div", className, ...props }: BlockProps) {
     />
   );
 }
+
+// Ensure there's a default export to match existing imports like `import Block from './ui/Block'`
+export default Block;
