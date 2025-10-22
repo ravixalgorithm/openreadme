@@ -176,7 +176,6 @@ Create `.env.local` at the project root:
 ```env
 # Core Configuration
 NODE_ENV=development
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # GitHub Integration
 GITHUB_TOKEN=ghp_your_personal_access_token_here
@@ -218,44 +217,6 @@ openreadme/
 └── package.json                   # Dependencies and scripts
 ```
 
-## 📡 API & Integrations
-
-**Image Generation API**
-
-Endpoint: `GET /api/openreadme`
-
-Query Parameters:
-- `n` - Name (string)
-- `g` - GitHub username (string)
-- `x` - X/Twitter handle (string, optional)
-- `l` - LinkedIn username (string, optional)
-- `i` - Profile image URL (string, optional)
-- `p` - Portfolio/website URL (string, optional)
-- `z` - Cache-buster/random ID (string)
-
-Response:
-```json
-{
-  "url": "https://your-domain.com/generated/openreadme/your-id.png"
-}
-```
-
-Example Usage:
-```bash
-curl "https://openreadme.dev/api/openreadme?n=John%20Doe&g=johndoe&x=johndoe&l=johndoe&z=12345"
-```
-
-**GitHub Actions Integration**
-- Auto-generated workflow files
-- Scheduled updates (configurable)
-- Automatic image refresh
-- Repository integration
-
-**Image Storage & Delivery**
-- Optimized image generation
-- Fast delivery system
-- Automatic cleanup
-- Version management
 
 ## 🧪 Scripts & Tooling
 
