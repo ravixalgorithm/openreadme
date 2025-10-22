@@ -62,7 +62,7 @@ export default function DashboardPage() {
 
         {/* Preview Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col items-start justify-between mb-6 md:items-center md:flex-row">
             <h2 className="flex items-center gap-2 text-2xl font-semibold">
               <div className="flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-purple-500 rounded-full">
                 2
@@ -72,7 +72,7 @@ export default function DashboardPage() {
             <ThemeSelector value={theme} onChange={setTheme} />
           </div>
 
-          <div className="p-8 border bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-2xl border-secondary">
+          <div className="p-2 border md:p-8 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-2xl border-secondary">
             <ThemedGrid
               name={name}
               githubURL={githubURL}

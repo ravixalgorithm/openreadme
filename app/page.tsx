@@ -182,7 +182,7 @@ export default function Home() {
 
       {/* Social Proof */}
       <section className="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="p-8 border bg-gradient-to-r from-teal-50 to-purple-50 dark:from-teal-950/20 dark:to-purple-950/20 rounded-3xl md:p-12 border-teal-200/50 dark:border-teal-800/50">
+        <div className="p-8 border from-teal-950/20 to-purple-950/20 rounded-3xl md:p-12 border-teal-800/50">
           <div className="text-center">
             <h2 className="mb-4 text-2xl font-bold sm:text-3xl">
               Join the Community
