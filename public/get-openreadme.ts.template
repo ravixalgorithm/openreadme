@@ -5,8 +5,12 @@
 
 import https from 'node:https'
 import fs from 'node:fs'
+import path from 'node:path'
 
-const outPath = 'openreadme.png'
+// Write the image inside public so Next.js can serve it
+const outPath = process.env.OPENREADME_OUTPUT || 'public/openreadme.png'
+// Ensure output directory exists
+fs.mkdirSync(path.dirname(outPath), { recursive: true })
 
 function download(url: string, dest: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -37,12 +41,22 @@ async function main() {
       throw new Error(`API request failed: ${res.status} ${res.statusText}`)
     }
 
-    // If your API returns JSON like { ok: true, url: "https://..." }
-    const data = await res.json().catch(() => ({}))
+    // Expect JSON like { ok: true, url: "https://..." }
+    const data: any = await res.json().catch(() => ({}))
+    if (data?.error) {
+      throw new Error(`API error: ${data.error}`)
+    }
     console.log("OpenReadme refresh triggered:", data?.url ?? "(no url)")
 
-    // No commit is necessary if the served image URL stays constant for the same z id.
-    // If you decide to write a local artifact, add fs writes here.
+    // If an image URL is provided, download and overwrite the public file
+    const imageUrl: string | undefined = data?.url
+    if (typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
+      console.log(`Downloading image to ${outPath} ...`)
+      await download(imageUrl, outPath)
+      console.log('Image updated.')
+    } else {
+      console.log('No image URL returned; nothing to download.')
+    }
   } catch (err) {
     console.error("[OpenReadme] Refresh failed:", err)
     process.exit(1)
