@@ -325,12 +325,12 @@ export async function GET(req: NextRequest) {
             <div class="relative z-10 flex flex-col justify-between h-full text-white">
               <div class="flex items-center justify-between">
                 <i data-lucide="sparkles" class="w-6 h-6 text-yellow-300 animate-pulse foreground-icon"></i>
-                <div class="px-3 py-1 text-xs font-medium rounded-full bg-white/20 backdrop-blur">Developer</div>
+                <div class="px-3 py-1 text-lg font-medium rounded-full bg-white/20 backdrop-blur">Developer</div>
               </div>
               <div>
-                <p class="mb-2 text-lg font-medium opacity-90">Hello, I'm</p>
-                <h1 class="text-3xl font-bold leading-tight">${n || "Your Name"}</h1>
-                <p class="mt-3 text-white/80 text-sm">Building the future, one commit at a time</p>
+                <p class="mb-2 text-xl font-medium opacity-90">Hello, I'm</p>
+                <h1 class="text-5xl font-bold leading-tight">${n || "Your Name"}</h1>
+                <p class="mt-3 text-white/80 text-md">Building the future, one commit at a time</p>
               </div>
             </div>
           </div>
@@ -338,7 +338,7 @@ export async function GET(req: NextRequest) {
 
         <!-- Profile Image -->
         <div class="col-span-12 row-span-3 md:col-span-8 lg:col-span-6 group">
-          <div class="relative h-full min-h-[400px] overflow-hidden rounded-3xl shadow-2xl">
+          <div class="relative h-full min-h-[300px] overflow-hidden rounded-3xl shadow-2xl">
             ${i ? `<img src="${i}" alt="${n || 'Profile'}" class="object-cover w-full h-full" style="width: 100%; height: 100%;" />` : `
               <div class="flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-800">
                 <div class="text-center text-gray-600 dark:text-gray-300">
@@ -375,8 +375,8 @@ export async function GET(req: NextRequest) {
             <div class="relative z-10 flex flex-col justify-between h-full text-white">
               <i data-lucide="twitter" class="w-5 h-5 foreground-icon"></i>
               <div>
-                <p class="text-sm opacity-80">Follow me on</p>
-                <p class="font-semibold text-sm">@${x || "twitter"}</p>
+                <p class="text-md opacity-80">Follow me on</p>
+                <p class="font-semibold text-xl">@${x || "twitter"}</p>
               </div>
             </div>
           </div>
@@ -389,8 +389,8 @@ export async function GET(req: NextRequest) {
             <div class="relative z-10 flex flex-col justify-between h-full text-white">
               <i data-lucide="linkedin" class="w-5 h-5 foreground-icon"></i>
               <div>
-                <p class="text-sm opacity-80">Connect on</p>
-                <p class="font-semibold text-sm">${l || "LinkedIn"}</p>
+                <p class="text-md opacity-80">Connect on</p>
+                <p class="font-semibold text-xl">${l || "LinkedIn"}</p>
               </div>
             </div>
           </div>
@@ -403,8 +403,8 @@ export async function GET(req: NextRequest) {
             <div class="relative z-10 flex flex-col justify-between h-full text-white">
               <i data-lucide="globe" class="w-5 h-5 foreground-icon"></i>
               <div>
-                <p class="text-sm opacity-80">Visit</p>
-                <p class="font-semibold text-sm truncate">${p ? (p.startsWith("https://") ? p.replace("https://", "") : p) : "Portfolio"}</p>
+                <p class="text-md opacity-80">Visit</p>
+                <p class="font-semibold text-xl truncate">${p ? (p.startsWith("https://") ? p.replace("https://", "") : p) : "Portfolio"}</p>
               </div>
             </div>
           </div>
@@ -412,20 +412,20 @@ export async function GET(req: NextRequest) {
 
         <!-- GitHub Activity Graph - Fixed Height -->
         <div class="col-span-12 row-span-1">
-          <div class="relative h-full min-h-[160px] p-6 bg-gradient-to-r from-gray-800 to-gray-800 rounded-3xl overflow-hidden shadow-xl">
+          <div class="relative h-full min-h-[180px] p-6 bg-gradient-to-r from-gray-800 to-gray-800 rounded-3xl overflow-hidden shadow-xl">
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-3">
                 <i data-lucide="activity" class="w-5 h-5 text-green-400 foreground-icon"></i>
                 <h3 class="text-lg font-semibold text-white">Activity Graph</h3>
               </div>
-              <div class="px-3 py-1 text-xs font-medium text-green-400 rounded-full bg-green-400/10">Last 12 months</div>
+              <div class="px-3 py-1 text-md font-medium text-green-400 rounded-full bg-green-400/10">Last 12 months</div>
             </div>
-            <div class="w-full h-20">
-              ${g ? `<img src="https://github-readme-activity-graph.vercel.app/graph?username=${g}&bg_color=1f2937&color=10b981&line=059669&point=34d399&area=true&hide_border=true" alt="Activity graph" class="object-cover w-full h-full rounded-xl" style="height: 80px; width: 100%;" />` : `
+            <div class="w-full h-full">
+              ${g ? `<img src="https://github-readme-activity-graph.vercel.app/graph?username=${g}&bg_color=1f2937&color=10b981&line=059669&point=34d399&area=true&hide_border=true" alt="Activity graph" class="object-cover w-full h-full rounded-xl" style="height: 100%; width: 100%;" />` : `
                 <div class="flex items-center justify-center w-full h-20 bg-gray-700 rounded-xl">
                   <div class="text-center text-gray-400">
                     <i data-lucide="github" class="w-6 h-6 mx-auto mb-2 foreground-icon"></i>
-                    <p class="text-xs">Enter GitHub username to see activity graph</p>
+                    <p class="text-md">Enter GitHub username to see activity graph</p>
                   </div>
                 </div>
               `}
@@ -436,7 +436,7 @@ export async function GET(req: NextRequest) {
         <!-- Total Stars - Hero Card -->
         <div class="col-span-12 row-span-2 md:col-span-6 lg:col-span-4">
           <div class="relative h-full min-h-[200px] p-6 bg-gradient-to-br from-yellow-600 to-orange-700 rounded-3xl overflow-hidden shadow-xl">
-            <div class="absolute inset-0 background-icon">
+            <div class="absolute inset-0 background-icon opacity-70">
               <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 20%; left: 10%;"></i>
               <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 35%; left: 30%; animation-delay: 0.5s;"></i>
               <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 50%; left: 50%; animation-delay: 1s;"></i>
@@ -445,12 +445,11 @@ export async function GET(req: NextRequest) {
             </div>
             <div class="relative z-10 flex flex-col justify-between h-full text-white">
               <div class="flex items-center gap-2">
-                <i data-lucide="star" class="w-5 h-5 fill-current foreground-icon"></i>
-                <span class="text-lg font-medium">Total Stars</span>
+                <span class="text-3xl font-medium">Total Stars</span>
               </div>
               <div>
-                <div class="mb-2 font-bold text-5xl">${userStats["Star Earned"] || "0"}</div>
-                <p class="text-white/80 text-sm">Stars earned across repositories</p>
+                <div class="mb-2 font-bold text-7xl">${userStats["Star Earned"] || "0"}</div>
+                <p class="text-white/80 text-md">Stars earned across repositories</p>
               </div>
             </div>
           </div>
@@ -459,38 +458,38 @@ export async function GET(req: NextRequest) {
         <!-- Stats Mini Grid -->
         <div class="grid grid-cols-2 col-span-12 row-span-2 gap-4 md:col-span-6 lg:col-span-4">
           <!-- Commits -->
-          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl min-h-[90px]">
-            <i data-lucide="git-commit" class="absolute w-12 h-12 text-green-300 foreground-icon -top-1 right-2"></i>
-            <div class="relative z-10 text-white flex flex-col justify-center h-full">
-              <div class="text-3xl font-bold">${userStats.Commits || "0"}</div>
-              <p class="text-xs opacity-80">Commits</p>
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl">
+            <i data-lucide="git-commit" class="absolute w-24 h-24 text-green-300 opacity-100 -top-2 right-2"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats.Commits || "0"}</div>
+              <p class="text-md opacity-80">Commits</p>
             </div>
           </div>
 
           <!-- Pull Requests -->
-          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl min-h-[90px]">
-            <i data-lucide="git-pull-request" class="absolute w-12 h-12 text-pink-300 foreground-icon top-1 right-2"></i>
-            <div class="relative z-10 text-white flex flex-col justify-center h-full">
-              <div class="text-3xl font-bold">${userStats["Pull Requests"] || "0"}</div>
-              <p class="text-xs opacity-80">Pull Requests</p>
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl">
+            <i data-lucide="git-pull-request" class="absolute w-24 h-24 text-pink-300 opacity-100 top-2 right-2"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats["Pull Requests"] || "0"}</div>
+              <p class="text-md opacity-80">Pull Requests</p>
             </div>
           </div>
 
           <!-- Followers -->
-          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl min-h-[90px]">
-            <i data-lucide="users" class="absolute w-12 h-12 text-white top-1 right-2 background-icon"></i>
-            <div class="relative z-10 text-white flex flex-col justify-center h-full">
-              <div class="text-3xl font-bold">${userStats.Followers || "0"}</div>
-              <p class="text-xs opacity-80">Followers</p>
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl">
+            <i data-lucide="users" class="absolute w-24 h-24 text-white top-2 right-2 opacity-20"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats.Followers || "0"}</div>
+              <p class="text-md opacity-80">Followers</p>
             </div>
           </div>
 
           <!-- Contributed To -->
-          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl min-h-[90px]">
-            <i data-lucide="git-branch" class="absolute w-12 h-12 text-white top-1 right-2 background-icon"></i>
-            <div class="relative z-10 text-white flex flex-col justify-center h-full">
-              <div class="text-3xl font-bold">${userStats["Contributed To"] || "0"}</div>
-              <p class="text-xs opacity-80">Repos</p>
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl">
+            <i data-lucide="git-branch" class="absolute w-24 h-24 text-white top-2 right-2 opacity-20"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats["Contributed To"] || "0"}</div>
+              <p class="text-md opacity-80">Contributed To</p>
             </div>
           </div>
         </div>
@@ -498,27 +497,27 @@ export async function GET(req: NextRequest) {
         <!-- Streak Stats -->
         <div class="grid col-span-12 grid-rows-3 row-span-2 gap-4 lg:col-span-4">
           <!-- Current Streak -->
-          <div class="relative row-span-2 p-4 overflow-hidden shadow-xl bg-gradient-to-br from-orange-600 to-red-700 rounded-2xl min-h-[130px]">
-            <div class="absolute inset-0 text-orange-500 background-icon">
-              <i data-lucide="flame" class="absolute w-16 h-16 top-2 right-2"></i>
+          <div class="relative row-span-2 p-6 overflow-hidden shadow-xl bg-gradient-to-br from-orange-600 to-red-700 rounded-2xl">
+            <div class="absolute inset-0 text-orange-500 opacity-100">
+              <i data-lucide="flame" class="absolute w-24 h-24 top-4 right-4"></i>
             </div>
             <div class="relative z-10 flex flex-col justify-between h-full text-white">
               <div class="flex items-center gap-2">
-                <span class="font-medium text-sm">Current Streak</span>
+                <span class="font-medium">Current Streak</span>
               </div>
               <div>
-                <div class="mb-1 font-bold text-4xl">${contributionStats.currentStreak || "0"}</div>
-                <p class="text-xs text-white/80">days</p>
+                <div class="mb-1 font-bold text-7xl">${contributionStats.currentStreak || "0"}</div>
+                <p class="text-md text-white/80">days</p>
               </div>
             </div>
           </div>
 
           <!-- Longest Streak -->
-          <div class="relative p-3 overflow-hidden shadow-lg bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl min-h-[60px]">
-            <i data-lucide="trophy" class="absolute w-8 h-8 text-white foreground-icon top-1 right-2"></i>
-            <div class="relative z-10 text-white flex flex-col justify-center h-full">
-              <div class="text-2xl font-bold">${contributionStats.longestStreak || "0"}</div>
-              <p class="text-xs opacity-80">Longest Streak</p>
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl">
+            <i data-lucide="trophy" class="absolute w-12 h-12 text-white opacity-100 top-2 right-2"></i>
+            <div class="relative z-10 text-white">
+              <div class="text-3xl font-bold">${contributionStats.longestStreak || "0"}</div>
+              <p class="text-md opacity-80">Longest Streak</p>
             </div>
           </div>
         </div>
@@ -529,21 +528,21 @@ export async function GET(req: NextRequest) {
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-3">
                 <i data-lucide="calendar" class="w-5 h-5 text-green-400 foreground-icon"></i>
-                <h3 class="text-lg font-semibold text-white">Contribution Graph</h3>
+                <h3 class="text-2xl font-semibold text-white">Contribution Graph</h3>
               </div>
-              <div class="flex items-center gap-2 text-xs text-gray-400">
+              <div class="flex items-center gap-2 text-lg text-gray-400">
                 <span>Less</span>
                 <div class="flex gap-1">
-                  <div class="w-2 h-2 rounded-sm" style="background-color: #0d1117"></div>
-                  <div class="w-2 h-2 rounded-sm" style="background-color: #0e4429"></div>
-                  <div class="w-2 h-2 rounded-sm" style="background-color: #006d32"></div>
-                  <div class="w-2 h-2 rounded-sm" style="background-color: #26a641"></div>
-                  <div class="w-2 h-2 rounded-sm" style="background-color: #39d353"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #0d1117"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #0e4429"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #006d32"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #26a641"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #39d353"></div>
                 </div>
                 <span>More</span>
               </div>
             </div>
-            <div class="contribution-graph w-full h-48 overflow-visible">
+            <div class="contribution-graph w-full h-full overflow-visible">
               ${graphSVG}
             </div>
           </div>
@@ -552,7 +551,7 @@ export async function GET(req: NextRequest) {
         <!-- Open Dev Society Branding -->
         <div class="absolute z-20 -bottom-4 -right-2">
           <div class="px-3 py-1 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl shadow-lg transform -rotate-3">
-            <p class="text-xs font-medium text-white">Powered by <span class="font-bold">Open Dev Society</span></p>
+            <p class="text-xl font-medium text-white">Powered by <span class="font-bold">Open Dev Society</span></p>
           </div>
         </div>
       </div>

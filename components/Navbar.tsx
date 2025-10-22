@@ -28,7 +28,7 @@ export default function Navbar() {
                             alt="Open Readme Logo"
                             width={32}
                             height={32}
-                            className="w-6 h-6 sm:w-8 sm:h-8"
+                            className="w-12 h-6 sm:w-16 sm:h-8"
                         />
                         <p className="text-lg font-black sm:text-xl lg:text-2xl">
                             Open ReadMe
@@ -100,7 +100,7 @@ export default function Navbar() {
                                     alt="Open Readme Logo"
                                     width={24}
                                     height={24}
-                                    className="w-6 h-6"
+                                    className="w-12 h-6"
                                 />
                                 <h3 className="text-lg font-bold text-white">Open ReadMe</h3>
                             </div>

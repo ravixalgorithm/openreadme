@@ -17,9 +17,9 @@ export default function AboutPage() {
                     {/* Hero Section */}
                     <div className="relative mb-20 text-center">
                         <div className="absolute inset-0 -z-10">
-                            <div className="absolute top-0 h-32 -translate-x-1/2 rounded-full left-1/2 w-96 bg-primary/10 blur-3xl" />
+                            <div className="absolute top-0 h-32 -translate-x-1/2 rounded-full left-1/2 w-96 bg-teal-500/10 blur-3xl" />
                         </div>
-                        <h1 className="mb-6 text-5xl font-bold text-transparent md:text-7xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                        <h1 className="mb-6 text-5xl font-bold text-white md:text-7xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                             About
                         </h1>
                         <p className="max-w-3xl mx-auto text-xl leading-relaxed text-muted-foreground">
@@ -107,7 +107,7 @@ export default function AboutPage() {
                                         <h2 className="text-3xl font-bold md:text-4xl">
                                             Project Lead
                                         </h2>
-                                        <div className="text-2xl font-semibold text-primary">
+                                        <div className="text-2xl font-semibold text-teal-500">
                                             @ravixalgorithm
                                         </div>
                                         <p className="text-lg leading-relaxed text-muted-foreground">
