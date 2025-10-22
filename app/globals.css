@@ -412,3 +412,13 @@
 .glow-orange {
     filter: drop-shadow(0 0 20px #f04429);
 }
+
+/* Prevent horizontal scrolling on mobile */
+html, body, #__next {
+  max-width: 100%;
+  overflow-x: clip; /* better than hidden on iOS */
+}
+img, video, svg {
+  max-width: 100%;
+  height: auto;
+}
