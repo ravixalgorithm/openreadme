@@ -85,12 +85,12 @@ export default function Component() {
                         transition={{ duration: 0.6 }}
                         className="text-center"
                     >
-                        <h1 className="mb-6 text-4xl font-bold text-transparent sm:text-6xl lg:text-7xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                        <h1 className="mb-6 text-4xl font-bold text-white sm:text-6xl lg:text-7xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                             Open Readme Docs
                         </h1>
                         <p className="max-w-3xl mx-auto text-xl leading-relaxed sm:text-2xl text-muted-foreground">
                             Welcome to the official documentation for{" "}
-                            <span className="px-3 py-1 font-semibold rounded-lg bg-primary/20 text-primary">
+                            <span className="px-3 py-1 font-semibold text-teal-500 rounded-lg bg-teal-500/20">
                                 Open Readme
                             </span>
                         </p>
@@ -239,7 +239,7 @@ export default function Component() {
                                 <div className="p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl">
                                     <p className="text-lg text-blue-900 dark:text-blue-100">
                                         Click on the{" "}
-                                        <button className="inline-flex items-center justify-center h-10 px-4 py-2 mx-2 text-sm font-medium rounded-md whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90">
+                                        <button className="inline-flex items-center justify-center h-10 px-4 py-2 mx-2 text-sm font-medium bg-teal-500 rounded-md whitespace-nowrap text-teal-500-foreground hover:bg-teal-500/90">
                                             Generate Image
                                         </button>
                                         button. And Voila! This will generate a new image for you.
@@ -397,7 +397,7 @@ export default function Component() {
                             </div>
                             <div className="relative">
                                 <motion.div
-                                    className="absolute left-0 w-[2px] bg-primary origin-top rounded-full"
+                                    className="absolute left-0 w-[2px] bg-teal-500 origin-top rounded-full"
                                     style={{ scaleY }}
                                 />
                                 <nav className="pl-4 space-y-2 border-l-2 border-muted">
@@ -471,7 +471,7 @@ export default function Component() {
             {showScrollTop && (
                 <button
                     onClick={scrollToTop}
-                    className="fixed z-40 p-3 transition-opacity duration-200 rounded-full shadow-lg bottom-6 left-6 bg-primary text-primary-foreground"
+                    className="fixed z-40 p-3 transition-opacity duration-200 bg-teal-500 rounded-full shadow-lg bottom-6 left-6 text-teal-500-foreground"
                 >
                     <ArrowUp className="w-5 h-5" />
                 </button>

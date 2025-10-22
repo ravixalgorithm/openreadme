@@ -193,7 +193,7 @@ export default function Home() {
 
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button asChild className="font-semibold text-white bg-teal-500 hover:bg-teal-600">
-                <a href="https://github.com/ravixalgorithm/openreadme" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <a href="https://github.com/open-dev-society/openreadme" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                   <Github className="w-5 h-5" />
                   Star on GitHub
                   <ExternalLink className="w-4 h-4" />

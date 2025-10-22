@@ -23,16 +23,30 @@ function download(url: string, dest: string): Promise<void> {
   })
 }
 
+// UI injects: const apiUrl = "https://your-domain/api/openreadme?...";
+// Do not change the injected apiUrl line.
+
 async function main() {
-  if (typeof apiUrl === 'undefined') {
-    throw new Error('apiUrl not injected')
+  try {
+    if (typeof apiUrl !== "string" || !apiUrl.startsWith("http")) {
+      throw new Error("Invalid apiUrl injected into get-openreadme.ts")
+    }
+
+    const res = await fetch(apiUrl, { method: "GET", cache: "no-store" })
+    if (!res.ok) {
+      throw new Error(`API request failed: ${res.status} ${res.statusText}`)
+    }
+
+    // If your API returns JSON like { ok: true, url: "https://..." }
+    const data = await res.json().catch(() => ({}))
+    console.log("OpenReadme refresh triggered:", data?.url ?? "(no url)")
+
+    // No commit is necessary if the served image URL stays constant for the same z id.
+    // If you decide to write a local artifact, add fs writes here.
+  } catch (err) {
+    console.error("[OpenReadme] Refresh failed:", err)
+    process.exit(1)
   }
-  console.log('Fetching image from:', apiUrl)
-  await download(apiUrl, outPath)
-  console.log('Saved to', outPath)
 }
 
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})
+main()

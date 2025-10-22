@@ -370,7 +370,7 @@ const OpenReadmeGrid = ({
                                 </div>
                                 <div className="relative z-10 flex flex-col justify-between h-full text-white">
                                     <div className="flex items-center gap-2">
-                                        <Star className="w-6 h-6 fill-current" />
+
                                         <span className="text-3xl font-medium">Total Stars</span>
                                     </div>
                                     <div>
@@ -418,7 +418,7 @@ const OpenReadmeGrid = ({
                                 <GitBranch className="absolute w-24 h-24 text-white top-2 right-2 opacity-20" />
                                 <div className="relative z-10 text-white top-1/2">
                                     <div className="text-5xl font-bold">{stats["Contributed To"] || "0"}</div>
-                                    <p className="text-xs opacity-80">Repos</p>
+                                    <p className="text-xs opacity-80">Contributed To</p>
                                 </div>
                             </div>
                         </div>

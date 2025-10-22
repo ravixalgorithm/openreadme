@@ -29,7 +29,7 @@ export default function DashboardPage() {
       <div className="px-4 pt-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-transparent sm:text-5xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h1 className="mb-4 text-4xl font-bold text-transparent text-white sm:text-5xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Create Your Profile
           </h1>
           <p className="max-w-2xl mx-auto text-xl text-muted-foreground">
