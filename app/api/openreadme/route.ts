@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import fetchUserData from "@/actions/fetchUserData";
 import { fetchContributions } from "@/actions/githubGraphql";
 import { NextRequest, NextResponse } from "next/server";
