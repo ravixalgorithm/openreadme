@@ -31,13 +31,7 @@ import {
     Globe,
     Code2,
     GitCommit,
-    Heart,
     Sparkles,
-    MapPin,
-    Calendar as CalendarIcon,
-    Zap,
-    User,
-    ImageIcon,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
