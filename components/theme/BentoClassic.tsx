@@ -143,43 +143,61 @@ const OpenReadmeGrid = ({
     };
 
     const handleGenerateLink = async () => {
-        if (isGenerated) {
-            setIsOpen(true);
-            return;
+    if (isGenerated) {
+        setIsOpen(true);
+        return;
+    }
+    setLoading(true);
+    setIsGenerated(false);
+
+    // Ensure name is not empty
+    const displayName = name || githubURL || "Developer";
+
+    const apiURL = `/api/openreadme?n=${encodeURIComponent(
+        displayName,
+    )}&i=${encodeURIComponent(imageUrl)}&g=${encodeURIComponent(
+        githubURL,
+    )}&x=${encodeURIComponent(twitterURL)}&l=${encodeURIComponent(
+        linkedinURL,
+    )}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(randomId)}`;
+
+    try {
+        const res = await fetch(apiURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                github: githubURL // Also pass username in body as fallback
+            })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${res.status} - ${errorText}`);
         }
-        setLoading(true);
-        setIsGenerated(false);
-        const apiURL = `/api/openreadme?n=${encodeURIComponent(
-            name,
-        )}&i=${encodeURIComponent(imageUrl)}&g=${encodeURIComponent(
-            githubURL,
-        )}&x=${encodeURIComponent(twitterURL)}&l=${encodeURIComponent(
-            linkedinURL,
-        )}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(randomId)}`;
-        try {
-            const res = await fetch(apiURL);
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            const data = await res.json();
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            setImageLink(data.url);
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 },
-            });
-            setIsGenerated(true);
-            setIsOpen(true);
-        } catch (error) {
-            console.error("Error generating or uploading the image:", error);
-            toast.error(error instanceof Error ? error.message : "Failed to generate image");
-        } finally {
-            setLoading(false);
+
+        const data = await res.json();
+        if (data.error) {
+            throw new Error(data.error);
         }
-    };
+
+        setImageLink(data.url);
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+        });
+        setIsGenerated(true);
+        setIsOpen(true);
+    } catch (error) {
+        console.error("Error generating or uploading the image:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+        setLoading(false);
+    }
+};
 
     const copyToClipboard = async () => {
         await navigator.clipboard.writeText(`![OpenReadme](${imageLink})`);
