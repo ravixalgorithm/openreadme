@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
       body {
         font-family: 'Space Grotesk', sans-serif;
         margin: 0;
-        padding: 4px 0;
+        padding: 0 0;
         min-height: 100vh;
         box-sizing: border-box;
       }
@@ -302,7 +302,7 @@ export async function POST(req: NextRequest) {
         width: 1160px;
         max-width: 1160px;
         margin: 0 auto;
-        padding: 0 4px;
+        padding: 0 0;
       }
       .grid-container {
         min-height: 1100px;
