@@ -511,23 +511,25 @@ export async function GET(req: NextRequest) {
 
     console.log(`✅ Returning ${theme} theme image for user: ${g}`);
 
-    
+    // GitHub-friendly headers for 1-hour caching
     return new NextResponse(screenshot as BodyInit, {
-    headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "no-cache, no-store, must-revalidate", // GitHub prefers this
-        "Pragma": "no-cache",
-        "Expires": "0",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "X-Content-Type-Options": "nosniff", // Important for GitHub
-        "X-Frame-Options": "DENY",
-        "X-Generated-For": g,
-        "X-Generated-At": new Date().toISOString(),
-        "X-Theme": theme,
-    },
-});
+        headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=3600, s-maxage=3600", // 1 hour cache
+            "Expires": new Date(Date.now() + 3600000).toUTCString(), // 1 hour from now
+            "Last-Modified": new Date().toUTCString(),
+            "ETag": `"${Math.floor(Date.now() / 3600000)}"`, // Changes every hour
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "X-Content-Type-Options": "nosniff",
+            "Vary": "Accept-Encoding",
+            "X-Generated-For": g,
+            "X-Generated-At": new Date().toISOString(),
+            "X-Theme": theme,
+            "X-Cache-Duration": "3600", // 1 hour indicator
+        },
+    });
 
   } catch (error: any) {
     console.error("💥 Direct image generation error:", error);
