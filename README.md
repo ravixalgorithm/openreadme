@@ -5,7 +5,7 @@
   </a>
 
   <br />
-  © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit the original authors.
+  © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and cre[...]
   <br/>
 
   <div>
@@ -21,9 +21,11 @@
 
 # OpenReadme
 
-OpenReadme is a modern, open-source GitHub profile README generator that creates beautiful, auto-updating profile banners with customizable bento-style grids. Built with Next.js and serverless technology for seamless profile customization.
+OpenReadme is a modern, open-source GitHub profile README generator that creates beautiful, customizable bento-style grids. Built with Next.js and serverless technology, it allows you to create stunning profile README banners. 
 
-Note: OpenReadme is a community-built tool for generating GitHub profile READMEs. Generated images are cached and may be updated based on your configuration and GitHub activity.
+> **Note**: Workflow automation and auto-updating features are currently under development. For now, OpenReadme supports only **static image creation**.
+
+---
 
 ## 📋 Table of Contents
 
@@ -42,49 +44,15 @@ Note: OpenReadme is a community-built tool for generating GitHub profile READMEs
 13. 📜 [License](#license)
 14. 🙏 [Acknowledgements](#acknowledgements)
 
+---
+
 ## ✨ Introduction
 
-OpenReadme is a cutting-edge GitHub profile README generator powered by Next.js (App Router), Tailwind CSS, and serverless Chromium for dynamic image generation. Create stunning, auto-updating profile banners with personalized bento-style layouts that showcase your GitHub activity, social links, and professional information.
+OpenReadme is a cutting-edge GitHub profile README generator powered by Next.js (App Router), Tailwind CSS, and serverless Chromium for dynamic image generation. Create stunning profile banners for your GitHub README with ease. 
 
-## 🌍 Open Dev Society Manifesto <a name="manifesto"></a>
+Currently, OpenReadme supports **static image generation only**, and the auto-updating workflow feature is in progress.
 
-We live in a world where knowledge is hidden behind paywalls. Where tools are locked in subscriptions. Where information is twisted by bias. Where newcomers are told they're not "good enough" to access resources.
-
-We believe there's a better way.
-
-- **Our Belief**: Technology should belong to everyone. Knowledge should be open, free, and accessible. Communities should welcome newcomers with trust, not gatekeeping.
-- **Our Mission**: Build free, open-source projects that make a real difference:
-    - Tools that professionals and students can use without barriers.
-    - Knowledge platforms where learning is free, forever.
-    - Communities where every beginner is guided, not judged.
-    - Resources that run on trust, not profit.
-- **Our Promise**: We will never lock knowledge. We will never charge for access. We will never trade trust for money. We run on transparency, donations, and the strength of our community.
-- **Our Call**: If you've ever felt you didn't belong, struggled to find free resources, or wanted to build something meaningful — you belong here.
-
-Because the future belongs to those who build it openly.
-
-## ⚙️ Tech Stack
-
-**Core**
-- Next.js 15 (App Router), React 19
-- TypeScript
-- Tailwind CSS
-- Puppeteer + Chromium (serverless)
-
-**UI & Animation**
-- Framer Motion
-- Lucide React icons
-- Custom bento-style grid components
-- Responsive design system
-
-**Automation & Integration**
-- GitHub Actions workflows
-- GitHub API integration
-- Serverless image generation
-- Auto-updating profile images
-
-**Language Composition**
-- TypeScript (~85%), JavaScript (~10%), CSS (~5%)
+---
 
 ## 🔋 Features
 
@@ -94,17 +62,15 @@ Because the future belongs to those who build it openly.
     - Social media integration (GitHub, Twitter, LinkedIn)
     - Portfolio and website links
 
-- **🔄 Auto-Updates**
+- **🔄 Auto-Updates (Upcoming)**
     - GitHub Actions workflow generation
     - Scheduled profile image updates
     - Real-time GitHub stats integration
     - Automatic cache invalidation
 
-- **⚡ One-Click Setup**
-    - Downloadable workflow files
-    - Pre-configured GitHub Actions
-    - Easy repository integration
-    - No manual configuration required
+- **⚡ Current Functionality**
+    - Static image generation through the RESTful API
+    - Simplified and lightweight setup for immediate use
 
 - **🌐 API-First Design**
     - RESTful image generation API
@@ -124,11 +90,12 @@ Because the future belongs to those who build it openly.
     - Hot reload development
     - Production-ready builds
 
+---
+
 ## 🤸 Quick Start
 
 **Prerequisites**
 - Node.js 18+
-- GitHub personal access token (repo read permissions)
 - Git for version control
 
 **Clone and Install**
@@ -146,7 +113,6 @@ pnpm install
 
 **Configure Environment**
 - Create a `.env.local` file (see [Environment Variables](#environment-variables))
-- Generate GitHub personal access token
 
 **Run Development**
 ```bash
@@ -168,6 +134,7 @@ pnpm build && pnpm start
 
 Open http://localhost:3000 to start creating your OpenReadme!
 
+---
 
 ## 🔐 Environment Variables
 
@@ -177,7 +144,7 @@ Create `.env.local` at the project root:
 # Core Configuration
 NODE_ENV=development
 
-# GitHub Integration
+# GitHub Integration (Future Use)
 GITHUB_TOKEN=ghp_your_personal_access_token_here
 
 # Optional: Local Development
@@ -190,145 +157,25 @@ CHROME_EXECUTABLE_PATH=  # Optional for local Chromium path
 - Never commit sensitive credentials to version control
 - Consider using secure environment management tools
 
-## 🧱 Project Structure
-
-```
-openreadme/
-├── app/
-│   ├── api/
-│   │   └── openreadme/route.ts    # Image generation API
-│   ├── globals.css                # Global styles
-│   ├── layout.tsx                 # Root layout
-│   └── page.tsx                   # Main application page
-├── components/
-│   ├── ui/                        # Reusable UI components
-│   ├── ErrorBoundary.tsx          # Error handling
-│   ├── Navbar.tsx                 # Navigation component
-│   ├── Odsbranding.tsx           # Branding component
-│   └── Tree.tsx                   # File tree component
-├── lib/
-│   ├── env.ts                     # Environment validation
-│   └── utils.ts                   # Utility functions
-├── public/                        # Static assets
-├── types/                         # TypeScript definitions
-├── scripts/                       # Build and utility scripts
-├── next.config.ts                 # Next.js configuration
-├── tailwind.config.ts             # Tailwind configuration
-└── package.json                   # Dependencies and scripts
-```
-
-
-## 🧪 Scripts & Tooling
-
-**Package Scripts**
-- `dev`: Next.js development server
-- `build`: Production build
-- `start`: Production server
-- `lint`: ESLint code quality check
-- `type-check`: TypeScript validation
-
-**Development Tools**
-- TypeScript strict mode
-- ESLint with Next.js rules
-- Tailwind CSS with JIT compilation
-- Hot reload for rapid development
-
-**Build & Deployment**
-- Next.js optimization
-- Static asset optimization
-- Environment-aware builds
-- Docker containerization
-
-## 🤝 Contributing
-
-You belong here. Whether you're a student, a self-taught developer, or a seasoned engineer — contributions are welcome.
-
-**Getting Started**
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and linting
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-**Contribution Guidelines**
-- Open an issue to discuss ideas and bugs
-- Look for "good first issue" or "help wanted" labels
-- Keep PRs focused and well-documented
-- Add screenshots for UI changes
-- Be kind, guide beginners, no gatekeeping — that's the ODS way
-
-**Development Setup**
-```bash
-# Fork and clone your fork
-git clone https://github.com/your-username/openreadme.git
-cd openreadme
-
-# Install dependencies
-npm install
-
-# Create feature branch
-git checkout -b feature/your-feature
-
-# Make changes and test
-npm run dev
-npm run lint
-npm run type-check
-
-# Commit and push
-git add .
-git commit -m "Your descriptive commit message"
-git push origin feature/your-feature
-```
-
-## 🛡️ Security
-
-**Reporting Vulnerabilities**
-
-If you discover a security vulnerability:
-- Do not open a public issue
-- Email: opendevsociety@cc.cc
-- We'll coordinate responsible disclosure and patch swiftly
-
-**Security Measures**
-- Environment variable validation
-- Input sanitization
-- Rate limiting on API endpoints
-- Secure image generation process
+---
 
 ## 📜 License
 
 OpenReadme is and will remain free and open for everyone. This project is licensed under the AGPL-3.0 License - see the LICENSE file for details.
 
+---
+
 ## 🙏 Acknowledgements
 
-- Next.js team for the incredible React framework
-- Puppeteer for serverless browser automation
-- Tailwind CSS for utility-first styling
-- Framer Motion for smooth animations
-- GitHub for hosting and Actions integration
-- Open Dev Society community for continuous support and contributions
+Special thanks to the open-source community and all contributors who make OpenReadme possible. Your support drives us forward as we work on the upcoming features.
 
-— Built openly, for everyone, forever free. Open Dev Society.
-
-## Our Honourable Contributors
-
-- [ravixalgorithm](https://github.com/ravixalgorithm) - Core developer and project architect, built the entire application from the ground up including the profile generation system, API integration, and UI designing.
-
-## Special Thanks
-
-Huge appreciation to the open-source community and all developers who believe in making tools accessible to everyone. Your contributions make projects like OpenReadme possible.
-
-Special shoutout to [opbento.edgexhq.tech](https://opbento.edgexhq.tech) for the incredible inspiration and innovative ideas that sparked the creation of this amazing project. The bento-style design concept and creative approach were instrumental in shaping OpenReadme's visual identity.
+---
 
 <div align="center">
-  <p>Made with ❤️ by <a href="https://opendevsociety.com">Open Dev Society</a></p>
+  <p>Built with ❤️ by <a href="https://opendevsociety.com">Open Dev Society</a></p>
   <p>
     <a href="https://github.com/Open-Dev-Society">
       <img src="https://img.shields.io/badge/Open%20Dev%20Society-GitHub-black?style=for-the-badge&logo=github" alt="Open Dev Society" />
     </a>
   </p>
 </div>
-
-> © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit the original authors.
