@@ -563,7 +563,7 @@ const OpenReadmeGrid = ({
                             </AlertDialogHeader>
 
                             {/* Warning Note - Enhanced */}
-                            <div className="p-4 mb-6 border bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20 rounded-xl">
+                            {/* <div className="p-4 mb-6 border bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20 rounded-xl">
                                 <div className="flex items-center gap-3 text-amber-400">
                                     <AlertTriangle className="flex-shrink-0 w-5 h-5" />
                                     <div>
@@ -573,7 +573,7 @@ const OpenReadmeGrid = ({
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Embed Link Section - Enhanced */}
                             <div className="mb-6 space-y-3">
@@ -600,7 +600,7 @@ const OpenReadmeGrid = ({
                             </div>
 
                             {/* Download Section - Enhanced */}
-                            <div className="mb-6">
+                            {/* <div className="mb-6">
                                 <Button
                                     onClick={handleDownload}
                                     className="w-full py-6 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl"
@@ -608,10 +608,10 @@ const OpenReadmeGrid = ({
                                     <Download className="w-5 h-5 mr-2" />
                                     Download Setup Files
                                 </Button>
-                            </div>
+                            </div>*/}
 
                             {/* Files Preview - Enhanced */}
-                            <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2">
+                            {/* <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2">
                                 <div className="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 group hover:bg-gray-750 rounded-xl hover:border-gray-600">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -641,7 +641,7 @@ const OpenReadmeGrid = ({
                                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>*/}
 
                             {/* Footer Actions - Enhanced */}
                             <div className="flex items-center justify-between pt-4 border-t border-gray-700">
