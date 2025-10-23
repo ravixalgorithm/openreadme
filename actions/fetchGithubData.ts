@@ -1,9 +1,9 @@
 "use server";
 
-export async function fetchGitHubData(
+export async function fetchGitHubData<T = unknown>(
     query: string,
-    variables: any,
-): Promise<any> {
+    variables: Record<string, unknown> = {},
+): Promise<T> {
     const response = await fetch("https://api.github.com/graphql", {
         method: "POST",
         headers: {
@@ -18,5 +18,5 @@ export async function fetchGitHubData(
         throw new Error(`GitHub API request failed: ${response.statusText}`);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
 }

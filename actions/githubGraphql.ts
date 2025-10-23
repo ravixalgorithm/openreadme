@@ -14,7 +14,7 @@ export async function githubGraphql({
                                         variables,
                                     }: {
     query: string;
-    variables: Record<string, any>;
+    variables: Record<string, unknown>;
 }) {
     try {
         const token = process.env.GITHUB_TOKEN;
@@ -54,7 +54,7 @@ export async function githubGraphql({
 
 export async function fetchContributions(username: string): Promise<{
     totalContributions: number;
-    firstDateofContribution: string | null;
+    firstDateOfContribution: string | null;
     longestStreak: number;
     longestStreakStartDate: string | null;
     longestStreakEndDate: string | null;
@@ -76,7 +76,7 @@ export async function fetchContributions(username: string): Promise<{
 
     const { total, firstContributionDate } =
         calculateTotalContributions(allContributionDays);
-    const firstDateofContribution = formatDate(firstContributionDate);
+    const firstDateOfContribution = formatDate(firstContributionDate);
     const {
         longestStreak,
         startDate: longestStreakStart,
@@ -94,7 +94,7 @@ export async function fetchContributions(username: string): Promise<{
 
     return {
         totalContributions: total,
-        firstDateofContribution,
+        firstDateOfContribution,
         longestStreak,
         longestStreakStartDate,
         longestStreakEndDate,
