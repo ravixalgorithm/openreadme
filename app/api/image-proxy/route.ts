@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
         if (cached && (now - cached.timestamp) < CACHE_DURATION) {
             console.log('📦 Serving from cache');
 
-            return new NextResponse(cached.buffer, {
+            return new NextResponse(new Uint8Array(cached.buffer), {
                 headers: {
                     ...cached.headers,
                     'X-Cache': 'HIT',
