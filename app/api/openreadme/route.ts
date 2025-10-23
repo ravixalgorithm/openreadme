@@ -511,18 +511,23 @@ export async function GET(req: NextRequest) {
 
     console.log(`✅ Returning ${theme} theme image for user: ${g}`);
 
+    
     return new NextResponse(screenshot as BodyInit, {
-        headers: {
-            "Content-Type": "image/png",
-            "Cache-Control": "public, max-age=300, s-maxage=300", // 5 minutes cache
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "X-Generated-For": g,
-            "X-Generated-At": new Date().toISOString(),
-            "X-Theme": theme,
-        },
-    });
+    headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "no-cache, no-store, must-revalidate", // GitHub prefers this
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "X-Content-Type-Options": "nosniff", // Important for GitHub
+        "X-Frame-Options": "DENY",
+        "X-Generated-For": g,
+        "X-Generated-At": new Date().toISOString(),
+        "X-Theme": theme,
+    },
+});
 
   } catch (error: any) {
     console.error("💥 Direct image generation error:", error);
