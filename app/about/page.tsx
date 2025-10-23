@@ -85,7 +85,7 @@ export default function AboutPage() {
                                 </div>
                                 <div className="flex flex-wrap gap-4">
                                     <Button asChild variant="outline" size="lg" className="font-medium">
-                                        <Link href="/">
+                                        <Link href="https://github.com/open-dev-society/" target="_blank" rel="noreferrer">
                                             Visit Website
                                         </Link>
                                     </Button>
