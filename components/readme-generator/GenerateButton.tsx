@@ -100,9 +100,9 @@ export function GenerateButton({
 
       {loading && (
         <TextShimmer className="text-sm tracking-wide text-muted-foreground">
-          Creating your {selectedTheme} theme auto-updating image...
-        </TextShimmer>
-      )}
+            {`Creating your ${selectedTheme} theme auto-updating image...`}
+          </TextShimmer>
+        )}
 
       {!githubURL && (
         <p className="text-sm text-gray-400">

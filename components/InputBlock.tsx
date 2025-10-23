@@ -5,7 +5,6 @@ import Block from "./ui/Block";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Github,
@@ -19,7 +18,6 @@ import {
   Zap,
   FileQuestion,
   CheckCircle,
-  AlertCircle
 } from "lucide-react";
 import type { Graph, StreakStats, UserStats } from "@/types";
 
