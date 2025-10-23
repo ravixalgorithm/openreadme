@@ -250,7 +250,7 @@ export default function Component() {
                         </section>
 
                         {/* After Generation Section */}
-                        <section id="after-you-have-generated-your-image" className="mb-20 scroll-mt-24">
+                        {/*<section id="after-you-have-generated-your-image" className="mb-20 scroll-mt-24">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -312,10 +312,10 @@ export default function Component() {
                                     </div>
                                 </div>
                             </motion.div>
-                        </section>
+                        </section>*/}
 
                         {/* GitHub Settings Section */}
-                        <section id="github-settings" className="mb-20 scroll-mt-24">
+                        {/*<section id="github-settings" className="mb-20 scroll-mt-24">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -357,7 +357,7 @@ export default function Component() {
                                     </div>
                                 </div>
                             </motion.div>
-                        </section>
+                        </section>*/}
 
                         {/* Finale Section */}
                         <section id="finale" className="mb-20 scroll-mt-24">
