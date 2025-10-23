@@ -70,28 +70,58 @@ export default function InputBlock({
     }
 
     try {
-      const res1 = await fetch("/api/stats?&username=" + gUrl);
-      const data = await res1.json();
-      if (data.error) {
-        toast.error("Username not found");
+      // Fetch all data in parallel to improve performance
+      const [statsPromise, streakPromise, graphPromise] = [
+        fetch("/api/stats?&username=" + gUrl),
+        fetch("/api/streak?&username=" + gUrl),
+        fetch("/api/graph?username=" + gUrl)
+      ];
+
+      // Wait for stats first to validate the username
+      const statsResponse = await statsPromise;
+      const statsData = await statsResponse.json();
+
+      if (statsData.error) {
+        toast.error(statsData.error || "Username not found");
         setLoading(false);
         return;
       }
-      setStats(data.stats);
 
-      const res2 = await fetch("/api/streak?&username=" + gUrl);
-      const streak = await res2.json();
-      setStreak(streak.stats);
+      setStats(statsData.stats);
 
-      const res3 = await fetch("/api/graph?username=" + gUrl);
-      const graph = await res3.json();
-      setGraph(graph);
+      // Process the other responses
+      try {
+        const streakResponse = await streakPromise;
+        const streakData = await streakResponse.json();
+        if (streakData.error) {
+          toast.warning("Could not load streak data");
+        } else {
+          setStreak(streakData.stats);
+        }
+      } catch (streakError) {
+        console.error("Streak fetch error:", streakError);
+        toast.warning("Could not load streak data");
+      }
+
+      try {
+        const graphResponse = await graphPromise;
+        const graphData = await graphResponse.json();
+        if (graphData.error) {
+          toast.warning("Could not load graph data");
+        } else {
+          setGraph(graphData);
+        }
+      } catch (graphError) {
+        console.error("Graph fetch error:", graphError);
+        toast.warning("Could not load graph data");
+      }
 
       setGithubURL(gUrl);
       setSaved(prev => ({ ...prev, github: true }));
       toast.success("Github data loaded successfully");
     } catch (error) {
-      toast.error("Failed to load GitHub data");
+      console.error("GitHub data fetch error:", error);
+      toast.error("Failed to load GitHub data. Please try again.");
     } finally {
       setLoading(false);
     }
