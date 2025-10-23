@@ -43,13 +43,12 @@ export function GenerateButton({
       ? 'https://openreadme.vercel.app'
       : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
-    const directUrl = `${baseUrl}/api/openreadme?direct=true&theme=${selectedTheme}&n=${encodeURIComponent(
-      displayName,
-    )}&g=${encodeURIComponent(
-      githubURL,
-    )}&x=${encodeURIComponent(twitterURL)}&l=${encodeURIComponent(
-      linkedinURL,
-    )}&i=${encodeURIComponent(imageUrl)}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(randomId)}`;
+    // Update the URL generation:
+    const directUrl = `${baseUrl}/api/image-proxy?direct=true&theme=${selectedTheme}&n=${encodeURIComponent(
+    displayName,
+    )}&g=${encodeURIComponent(githubURL)}&x=${encodeURIComponent(twitterURL)}&l=${encodeURIComponent(
+    linkedinURL,
+    )}&i=${encodeURIComponent(imageUrl)}&p=${encodeURIComponent(portfolioUrl)}`;
 
     try {
       // Test the direct URL by making a request to it
