@@ -3,7 +3,7 @@
   <a href="#" target="_blank">
     <img src="./public/openreadme-banner.png" alt="OpenReadme Banner" />
   </a>
-  
+
   <br />
   © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit the original authors.
   <br/>
@@ -314,7 +314,7 @@ OpenReadme is and will remain free and open for everyone. This project is licens
 
 ## Our Honourable Contributors
 
-- [ravixalgorithm](https://github.com/ravixalgorithm) - Core developer and project architect, built the entire application from the ground up including the profile generation system, API integration, and user interface.
+- [ravixalgorithm](https://github.com/ravixalgorithm) - Core developer and project architect, built the entire application from the ground up including the profile generation system, API integration, and UI designing.
 
 ## Special Thanks
 
