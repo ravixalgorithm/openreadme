@@ -5,15 +5,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateContributionGraph } from "@/utils/generate-graph";
 import { fetchYearContributions } from "@/actions/fetchYearContribution";
 import { rateLimit } from "@/lib/rate-limit";
-import crypto from 'crypto';
 
 export const maxDuration = 45;
 
 // Security functions
-function hashUsername(username: string): string {
-    return crypto.createHash('sha256').update(username.toLowerCase()).digest('hex').substring(0, 12);
-}
-
 const isValidGitHubUsername = (u: string) =>
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(u)
 
@@ -516,7 +511,7 @@ export async function GET(req: NextRequest) {
 
     console.log(`✅ Returning ${theme} theme image for user: ${g}`);
 
-    return new NextResponse(screenshot, {
+    return new NextResponse(screenshot as BodyInit, {
         headers: {
             "Content-Type": "image/png",
             "Cache-Control": "public, max-age=300, s-maxage=300", // 5 minutes cache
@@ -543,7 +538,7 @@ export async function GET(req: NextRequest) {
 }
 
 // Remove POST method since we're focusing on direct GET requests
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
     return NextResponse.json(
         { error: "Use GET method with direct=true parameter for auto-updating images" },
         { status: 405 }

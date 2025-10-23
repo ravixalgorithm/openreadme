@@ -109,7 +109,7 @@ const BentoClassic = ({
                                 alt={name || "Profile"}
                                 fill
                                 className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                onError={(e) => {
+                                onError={(_e) => {
                                     console.error("Image failed to load:", imageUrl);
                                 }}
                             />
@@ -212,7 +212,7 @@ const BentoClassic = ({
                                 width={0}
                                 height={0}
                                 className="object-contain w-full h-full rounded-xl"
-                                onError={(e) => {
+                                onError={(_e) => {
                                     console.error("Activity graph failed to load");
                                 }}
                             />

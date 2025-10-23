@@ -16,5 +16,17 @@ export async function fetchContributionYears(
   `;
 
     const data = await fetchGitHubData(query, { user: username });
-    return data.data.user.contributionsCollection.contributionYears;
+
+    // Type assertion to handle the 'unknown' type from fetchGitHubData
+    const result = data as {
+        data: {
+            user: {
+                contributionsCollection: {
+                    contributionYears: number[]
+                }
+            }
+        }
+    };
+
+    return result.data.user.contributionsCollection.contributionYears;
 }
