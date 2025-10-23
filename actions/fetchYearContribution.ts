@@ -2,10 +2,13 @@
 
 import { fetchGitHubData } from "./fetchGithubData";
 
+type ContributionDay = { date: string; contributionCount: number };
+type Week = { contributionDays: ContributionDay[] };
+
 export async function fetchYearContributions(
     username: string,
     year: number,
-): Promise<{ date: string; contributionCount: number }[]> {
+): Promise<ContributionDay[]> {
     const query = `
     query ($user: String!, $from: DateTime!, $to: DateTime!) {
       user(login: $user) {
@@ -31,18 +34,29 @@ export async function fetchYearContributions(
         from: start,
         to: end,
     });
-    const weeks = data.data.user.contributionsCollection.contributionCalendar.weeks;
+
+    // Narrow the unknown response to the expected shape
+    const typed = data as {
+        data: {
+            user: {
+                contributionsCollection: {
+                    contributionCalendar: {
+                        weeks: Week[];
+                    };
+                };
+            } | null;
+        };
+    };
+
+    const weeks: Week[] = typed?.data?.user?.contributionsCollection?.contributionCalendar?.weeks ?? [];
 
     // Aggregate all the contribution days from the year
-    let contributionDays: { date: string; contributionCount: number }[] = [];
-    weeks.forEach((week: any) => {
-        week.contributionDays.forEach((day: any) => {
-            contributionDays.push({
-                date: day.date,
-                contributionCount: day.contributionCount,
-            });
-        });
-    });
+    const contributionDays: ContributionDay[] = weeks.flatMap((week: Week) =>
+        week.contributionDays.map((day: ContributionDay) => ({
+            date: day.date,
+            contributionCount: day.contributionCount,
+        })),
+    );
 
     return contributionDays;
 }

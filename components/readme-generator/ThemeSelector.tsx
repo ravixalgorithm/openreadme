@@ -1,18 +1,32 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { getThemeOptions, type ThemeId } from '@/themes';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, Palette, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeConfig } from '@/types/theme';
+
+const themes: ThemeConfig[] = [
+  {
+    id: 'bento',
+    name: 'Bento Classic',
+    description: 'Beautiful bento-style grid layout with comprehensive stats'
+
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    description: 'Clean and simple design focusing on essential stats'
+  }
+];
 
 interface ThemeSelectorProps {
-  value: ThemeId;
-  onChange: (value: ThemeId) => void;
+  selectedTheme: string;
+  onThemeChange: (theme: string) => void;
   className?: string;
 }
 
-export default function ThemeSelector({ value, onChange, className }: ThemeSelectorProps) {
+export function ThemeSelector({ selectedTheme, onThemeChange, className }: ThemeSelectorProps) {
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,16 +58,15 @@ export default function ThemeSelector({ value, onChange, className }: ThemeSelec
     );
   }
 
-  const options = getThemeOptions();
-  const currentTheme = options.find(option => option.id === value);
+  const currentTheme = themes.find(theme => theme.id === selectedTheme);
 
-  const handleThemeSelect = (themeId: ThemeId) => {
-    onChange(themeId);
+  const handleThemeSelect = (themeId: string) => {
+    onThemeChange(themeId);
     setIsOpen(false);
   };
 
   return (
-    <div className={cn("flex items-center gap-3 bg-secondary/50 rounded-lg p-3 border border-secondary transition-all duration-200 hover:bg-secondary/70", className)}>
+    <div className={cn("flex items-center gap-3 bg-secondary/50 rounded-lg p-3 border border-secondary transition-all duration-200 hover:bg-secondary/70 w-fit", className)}>
       <div className="flex items-center gap-2 text-muted-foreground">
         <Palette className="w-4 h-4 text-primary" />
         <Label className="text-sm font-medium whitespace-nowrap">
@@ -65,7 +78,7 @@ export default function ThemeSelector({ value, onChange, className }: ThemeSelec
         <button
           type="button"
           className={cn(
-            "w-full bg-background border border-border rounded-md px-3 py-2 pr-8",
+            "w-fit bg-background border border-border rounded-md px-3 py-2 pr-8",
             "text-sm font-medium text-foreground text-left",
             "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
             "transition-all duration-200 hover:border-primary/50",
@@ -85,21 +98,26 @@ export default function ThemeSelector({ value, onChange, className }: ThemeSelec
         </button>
 
         {isOpen && (
-          <div className="absolute left-0 right-0 z-50 mt-1 overflow-auto border rounded-md shadow-lg top-full bg-background border-border max-h-60">
-            {options.map((option) => (
+          <div className="absolute left-0 right-0 z-50 mt-1 overflow-auto bg-black border rounded-md shadow-lg top-full border-border max-h-60 w-fit">
+            {themes.map((theme) => (
               <button
-                key={option.id}
+                key={theme.id}
                 type="button"
                 className={cn(
                   "w-full px-3 py-2 text-sm text-left hover:bg-secondary/50 transition-colors duration-150",
                   "flex items-center justify-between",
-                  value === option.id && "bg-primary/10 text-primary"
+                  selectedTheme === theme.id && "bg-primary/10 text-primary"
                 )}
-                onClick={() => handleThemeSelect(option.id)}
+                onClick={() => handleThemeSelect(theme.id)}
               >
-                <span>{option.name}</span>
-                {value === option.id && (
-                  <Check className="w-4 h-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="font-medium">{theme.name}</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    {theme.description}
+                  </span>
+                </div>
+                {selectedTheme === theme.id && (
+                  <Check className="flex-shrink-0 w-4 h-4 ml-2 text-primary" />
                 )}
               </button>
             ))}
