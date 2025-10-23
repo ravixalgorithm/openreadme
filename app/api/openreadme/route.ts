@@ -5,10 +5,191 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateContributionGraph } from "@/utils/generate-graph";
 import { fetchYearContributions } from "@/actions/fetchYearContribution";
 import { rateLimit } from "@/lib/rate-limit";
+import crypto from 'crypto';
 
 export const maxDuration = 45;
 
 // Security functions
+function hashUsername(username: string): string {
+    return crypto.createHash('sha256').update(username.toLowerCase()).digest('hex').substring(0, 12);
+}
+
+function generateSecureFileName(username: string, uniqueId: string): string {
+    const hashedUsername = hashUsername(username);
+    const timestamp = Date.now();
+    const randomSuffix = crypto.createHash('md5').update(`${uniqueId}-${timestamp}`).digest('hex').substring(0, 8);
+    return `profiles/${hashedUsername}-${randomSuffix}.png`;
+}
+
+// Function to log usage statistics (best-effort, non-blocking)
+async function logUserGeneration(username: string, githubToken: string): Promise<void> {
+    try {
+        const statsFile = 'stats/usage-log.json';
+
+        // Get existing stats
+        let existingStats: any[] = [];
+        let currentSha = '';
+
+        try {
+            const response = await fetch(
+                `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${statsFile}`,
+                {
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                    },
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                existingStats = JSON.parse(Buffer.from(data.content, 'base64').toString());
+                currentSha = data.sha;
+            }
+        } catch (e) {
+            console.log('Stats file does not exist yet, creating new one');
+        }
+
+        const newEntry = {
+            hashedUsername: hashUsername(username),
+            actualUsername: username,
+            timestamp: new Date().toISOString(),
+            date: new Date().toISOString().split('T')[0]
+        };
+
+        existingStats.push(newEntry);
+
+        // Keep only last 1000 entries
+        if (existingStats.length > 1000) {
+            existingStats = existingStats.slice(-1000);
+        }
+
+        // Update stats file
+        const updatedContent = Buffer.from(JSON.stringify(existingStats, null, 2)).toString('base64');
+
+        const updatePayload: any = {
+            message: `Update usage stats - ${existingStats.length} total generations`,
+            content: updatedContent,
+            branch: 'main'
+        };
+
+        if (currentSha) {
+            updatePayload.sha = currentSha;
+        }
+
+        await fetch(
+            `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${statsFile}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatePayload),
+            }
+        );
+
+        console.log(`✅ Logged usage for ${username}`);
+    } catch (error) {
+        console.log('📊 Stats logging failed (non-critical):', error);
+    }
+}
+
+// Secure GitHub upload function
+async function uploadToGitHubSafely(
+    imageBuffer: Buffer,
+    githubToken: string,
+    username: string,
+    uniqueId: string
+): Promise<string> {
+    const fileName = generateSecureFileName(username, uniqueId);
+    const base64Image = imageBuffer.toString('base64');
+
+    // Validate image size (max 2MB)
+    if (imageBuffer.length > 2 * 1024 * 1024) {
+        throw new Error('Image too large (max 2MB)');
+    }
+
+    console.log(`📊 Logging usage for ${username}...`);
+    await logUserGeneration(username, githubToken);
+
+    // Clean up old files for this user
+    try {
+        const hashedUsername = hashUsername(username);
+        const existingFilesResponse = await fetch(
+            `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/profiles`,
+            {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                },
+            }
+        );
+
+        if (existingFilesResponse.ok) {
+            const files = await existingFilesResponse.json();
+            const userFiles = files.filter((file: any) =>
+                file.name.startsWith(`${hashedUsername}-`) && file.name.endsWith('.png')
+            );
+
+            // Delete old files for this user (keep repo clean)
+            for (const file of userFiles) {
+                try {
+                    await fetch(
+                        `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${file.path}`,
+                        {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `token ${githubToken}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                            },
+                            body: JSON.stringify({
+                                message: `🧹 Cleanup: Replace old image for user`,
+                                sha: file.sha,
+                            }),
+                        }
+                    );
+                    console.log(`🗑️ Deleted old file: ${file.name}`);
+                } catch (deleteError) {
+                    console.log(`⚠️ Could not delete old file ${file.path}`, deleteError);
+                }
+            }
+        }
+    } catch (cleanupError) {
+        console.log('🧹 Cleanup failed (non-critical):', cleanupError);
+    }
+
+    // Upload new file
+    console.log(`📤 Uploading new image: ${fileName}`);
+    const uploadResponse = await fetch(
+        `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${fileName}`,
+        {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: `✨ Add profile image for user ${new Date().toISOString()}`,
+                content: base64Image,
+                branch: 'main'
+            }),
+        }
+    );
+
+    if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(`GitHub upload failed: ${errorData.message || uploadResponse.statusText}`);
+    }
+
+    // Return the raw GitHub URL
+    const githubUrl = `https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/${fileName}`;
+    console.log(`✅ Successfully uploaded to: ${githubUrl}`);
+    return githubUrl;
+}
+
 const isValidGitHubUsername = (u: string) =>
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(u)
 
@@ -21,1088 +202,16 @@ function extractUsername(req: NextRequest, body?: any) {
     sp?.get("u") ??
     sp?.get("github") ??
     sp?.get("gh") ??
-    sp?.get("g") ??
     sp?.get("login") ??
     (body && (body.username ?? body.userName ?? body.user ?? body.u ?? body.github ?? body.gh ?? body.login))
   return typeof u === "string" ? u.trim() : ""
 }
 
-// Simple usage logging for direct requests
-async function logDirectUsage(username: string, theme: string): Promise<void> {
-    try {
-        console.log(`✅ Direct image generated for user: ${username} with theme: ${theme} at ${new Date().toISOString()}`);
-    } catch (error) {
-        console.log('📊 Direct usage logging failed (non-critical):', error);
-    }
-}
-
-// Exact replica of your BentoClassic theme as HTML
-function generateBentoHTML(data: any): string {
-    const { name, githubURL, imageUrl, twitterURL, linkedinURL, portfolioUrl, userStats, contributionStats, graphSVG } = data;
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Open Readme - Bento Classic</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #0a0a0a;
-        color: white;
-        width: 1200px;
-        height: 800px;
-        overflow: hidden;
-        padding: 20px;
-      }
-
-      .main-container {
-        width: 100%;
-        max-width: 1160px;
-        margin: 0 auto;
-        position: relative;
-      }
-
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 16px;
-        width: 100%;
-        height: 760px;
-        position: relative;
-      }
-
-      /* Hero Card */
-      .hero-card {
-        grid-column: span 3;
-        grid-row: span 2;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-        border-radius: 24px;
-        padding: 32px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      }
-
-      .hero-bg {
-        position: absolute;
-        inset: 0;
-        opacity: 0.2;
-      }
-
-      .hero-bg-circle-1 {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 128px;
-        height: 128px;
-        background: white;
-        border-radius: 50%;
-        transform: translate(-64px, -64px);
-        animation: pulse 2s infinite;
-      }
-
-      .hero-bg-circle-2 {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 160px;
-        height: 160px;
-        background: white;
-        border-radius: 50%;
-        transform: translate(80px, 80px);
-        animation: pulse 2s infinite;
-        animation-delay: 1s;
-      }
-
-      .hero-content {
-        position: relative;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        color: white;
-      }
-
-      .hero-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .hero-badge {
-        padding: 4px 12px;
-        font-size: 12px;
-        font-weight: 500;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 9999px;
-        backdrop-filter: blur(8px);
-      }
-
-      .hero-greeting {
-        margin-bottom: 8px;
-        font-size: 18px;
-        font-weight: 500;
-        opacity: 0.9;
-      }
-
-      .hero-name {
-        font-size: 40px;
-        font-weight: bold;
-        line-height: 1.2;
-        margin-bottom: 12px;
-      }
-
-      .hero-tagline {
-        margin-top: 12px;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 16px;
-      }
-
-      /* Profile Image */
-      .profile-card {
-        grid-column: span 6;
-        grid-row: span 3;
-        border-radius: 24px;
-        overflow: hidden;
-        position: relative;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      }
-
-      .profile-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .profile-placeholder {
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #6b7280, #4b5563);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        color: #d1d5db;
-      }
-
-      .profile-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent, transparent);
-      }
-
-      .profile-info {
-        position: absolute;
-        bottom: 24px;
-        left: 24px;
-        right: 24px;
-      }
-
-      .profile-info-card {
-        padding: 16px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .profile-info-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: white;
-      }
-
-      .profile-info-text p:first-child {
-        font-size: 14px;
-        opacity: 0.8;
-        margin-bottom: 4px;
-      }
-
-      .profile-info-text p:last-child {
-        font-weight: 600;
-      }
-
-      /* Social Links */
-      .social-grid {
-        grid-column: span 3;
-        grid-row: span 3;
-        display: grid;
-        gap: 16px;
-      }
-
-      .social-card {
-        position: relative;
-        min-height: 120px;
-        padding: 24px;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .social-twitter {
-        background: linear-gradient(135deg, #38bdf8, #3b82f6);
-      }
-
-      .social-linkedin {
-        background: linear-gradient(135deg, #2563eb, #1e40af);
-      }
-
-      .social-portfolio {
-        background: linear-gradient(135deg, #10b981, #059669);
-      }
-
-      .social-bg-icon {
-        position: absolute;
-        top: -16px;
-        right: -16px;
-        opacity: 0.2;
-      }
-
-      .social-content {
-        position: relative;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-      }
-
-      .social-label {
-        font-size: 14px;
-        opacity: 0.8;
-        margin-bottom: 8px;
-      }
-
-      .social-handle {
-        font-weight: 600;
-        font-size: 20px;
-      }
-
-      /* Activity Graph */
-      .activity-card {
-        grid-column: span 12;
-        grid-row: span 1;
-        background: linear-gradient(to right, #1f2937, #1f2937);
-        border-radius: 24px;
-        padding: 24px;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        min-height: 180px;
-      }
-
-      .activity-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-      }
-
-      .activity-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .activity-title h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: white;
-      }
-
-      .activity-badge {
-        padding: 4px 12px;
-        font-size: 14px;
-        font-weight: 500;
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.1);
-        border-radius: 9999px;
-      }
-
-      .activity-graph-container {
-        width: 100%;
-        height: 100px;
-      }
-
-      .activity-graph {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 12px;
-      }
-
-      .activity-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 80px;
-        background: #374151;
-        border-radius: 12px;
-        text-align: center;
-        color: #9ca3af;
-      }
-
-      /* Stats Cards */
-      .stats-card {
-        grid-column: span 4;
-        grid-row: span 2;
-        background: linear-gradient(135deg, #ea580c, #dc2626);
-        border-radius: 24px;
-        padding: 32px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        text-align: center;
-      }
-
-      .stats-bg {
-        position: absolute;
-        inset: 0;
-        opacity: 0.7;
-      }
-
-      .star-icon {
-        position: absolute;
-        color: #fde047;
-        animation: pulse 2s infinite;
-      }
-
-      .star-1 { top: 20%; left: 10%; animation-delay: 0s; }
-      .star-2 { top: 35%; left: 30%; animation-delay: 0.5s; }
-      .star-3 { top: 50%; left: 50%; animation-delay: 1s; }
-      .star-4 { top: 25%; right: 15%; animation-delay: 1.5s; }
-      .star-5 { top: 60%; right: 25%; animation-delay: 2s; }
-
-      .stats-content {
-        position: relative;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        color: white;
-        text-align: center;
-      }
-
-      .stats-title {
-        font-size: 24px;
-        font-weight: 500;
-        margin-bottom: 16px;
-      }
-
-      .stats-number {
-        font-size: 56px;
-        font-weight: bold;
-        margin-bottom: 8px;
-      }
-
-      .stats-label {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 16px;
-      }
-
-      /* Mini Stats */
-      .mini-stats {
-        grid-column: span 4;
-        grid-row: span 2;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
-      .mini-stat {
-        position: relative;
-        padding: 16px;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-        color: white;
-        text-align: center;
-      }
-
-      .mini-stat-commits {
-        background: linear-gradient(135deg, #059669, #047857);
-      }
-
-      .mini-stat-prs {
-        background: linear-gradient(135deg, #a855f7, #ec4899);
-      }
-
-      .mini-stat-followers {
-        background: linear-gradient(135deg, #3b82f6, #6366f1);
-      }
-
-      .mini-stat-repos {
-        background: linear-gradient(135deg, #0891b2, #06b6d4);
-      }
-
-      .mini-stat-bg-icon {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        opacity: 0.2;
-      }
-
-      .mini-stat-bg-icon-large {
-        position: absolute;
-        top: -8px;
-        right: 8px;
-        opacity: 1;
-      }
-
-      .mini-stat-content {
-        position: relative;
-        z-index: 10;
-        color: white;
-        margin-top: 20px;
-      }
-
-      .mini-stat-number {
-        font-size: 40px;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-
-      .mini-stat-label {
-        font-size: 12px;
-        opacity: 0.8;
-      }
-
-      /* Streak Stats */
-      .streak-grid {
-        grid-column: span 4;
-        grid-row: span 2;
-        display: grid;
-        grid-template-rows: 2fr 1fr;
-        gap: 16px;
-      }
-
-      .current-streak {
-        background: linear-gradient(135deg, #ea580c, #dc2626);
-        border-radius: 16px;
-        padding: 24px;
-        position: relative;
-        overflow: hidden;
-        color: white;
-        text-align: center;
-      }
-
-      .streak-bg {
-        position: absolute;
-        inset: 0;
-        color: #ea580c;
-        opacity: 1;
-      }
-
-      .streak-bg-icon {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-      }
-
-      .streak-content {
-        position: relative;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        color: white;
-      }
-
-      .streak-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-        margin-bottom: 16px;
-      }
-
-      .streak-number {
-        font-size: 56px;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-
-      .streak-days {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      .longest-streak {
-        background: linear-gradient(135deg, #eab308, #f59e0b);
-        border-radius: 16px;
-        padding: 16px;
-        position: relative;
-        overflow: hidden;
-        color: white;
-        text-align: center;
-      }
-
-      .longest-streak-bg-icon {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        opacity: 1;
-      }
-
-      .longest-streak-content {
-        position: relative;
-        z-index: 10;
-        color: white;
-      }
-
-      .longest-streak-number {
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-
-      .longest-streak-label {
-        font-size: 12px;
-        opacity: 0.8;
-      }
-
-      /* Contribution Graph */
-      .contribution-card {
-        grid-column: span 12;
-        grid-row: span 1;
-        background: linear-gradient(135deg, #111827, #1f2937, #111827);
-        border-radius: 24px;
-        padding: 24px;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        min-height: 280px;
-      }
-
-      .contribution-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 24px;
-      }
-
-      .contribution-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .contribution-title h3 {
-        font-size: 32px;
-        font-weight: 600;
-        color: white;
-      }
-
-      .contribution-legend {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 18px;
-        color: #9ca3af;
-      }
-
-      .legend-dots {
-        display: flex;
-        gap: 4px;
-      }
-
-      .legend-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-      }
-
-      .contribution-graph {
-        width: 100%;
-        height: 200px;
-        overflow: visible;
-      }
-
-      /* Branding */
-      .branding {
-        position: absolute;
-        bottom: -16px;
-        right: -8px;
-        z-index: 20;
-      }
-
-      .branding-card {
-        padding: 8px 16px;
-        background: linear-gradient(135deg, #14b8a6, #06b6d4);
-        border-radius: 12px;
-        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-        transform: rotate(-3deg);
-      }
-
-      .branding-text {
-        font-size: 14px;
-        font-weight: 600;
-        color: white;
-      }
-
-      .branding-highlight {
-        font-weight: bold;
-      }
-
-      /* Animations */
-      @keyframes pulse {
-        0%, 100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-      }
-
-      .icon {
-        width: 24px;
-        height: 24px;
-      }
-
-      .icon-sm {
-        width: 16px;
-        height: 16px;
-      }
-
-      .icon-lg {
-        width: 32px;
-        height: 32px;
-      }
-
-      .icon-xl {
-        width: 48px;
-        height: 48px;
-      }
-
-      .icon-2xl {
-        width: 64px;
-        height: 64px;
-      }
-
-      .icon-3xl {
-        width: 80px;
-        height: 80px;
-      }
-
-      .icon-4xl {
-        width: 96px;
-        height: 96px;
-      }
-    </style>
-</head>
-<body>
-    <div class="main-container">
-        <div class="grid-container">
-            <!-- Hero/Name Card -->
-            <div class="hero-card">
-                <div class="hero-bg">
-                    <div class="hero-bg-circle-1"></div>
-                    <div class="hero-bg-circle-2"></div>
-                </div>
-                <div class="hero-content">
-                    <div class="hero-header">
-                        <i data-lucide="sparkles" class="icon text-yellow-300"></i>
-                        <div class="hero-badge">Developer</div>
-                    </div>
-                    <div>
-                        <p class="hero-greeting">Hello, I'm</p>
-                        <h1 class="hero-name">${name || "Your Name"}</h1>
-                        <p class="hero-tagline">Building the future, one commit at a time</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Image -->
-            <div class="profile-card">
-                ${imageUrl ? `
-                    <img src="${imageUrl}" alt="${name || 'Profile'}" class="profile-img" />
-                ` : `
-                    <div class="profile-placeholder">
-                        <i data-lucide="user" class="icon-4xl"></i>
-                        <p style="font-size: 18px; font-weight: 500; margin-top: 16px;">Add your profile image</p>
-                        <p style="margin-top: 8px; font-size: 14px; opacity: 0.75;">Upload an image URL in the form above</p>
-                    </div>
-                `}
-                <div class="profile-overlay"></div>
-                <div class="profile-info">
-                    <div class="profile-info-card">
-                        <div class="profile-info-content">
-                            <div class="profile-info-text">
-                                <p>GitHub Profile</p>
-                                <p>@${githubURL || "username"}</p>
-                            </div>
-                            <i data-lucide="github" class="icon"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Social Links Grid -->
-            <div class="social-grid">
-                <!-- Twitter -->
-                <div class="social-card social-twitter">
-                    <div class="social-bg-icon">
-                        <i data-lucide="twitter" class="icon-3xl"></i>
-                    </div>
-                    <div class="social-content">
-                        <i data-lucide="twitter" class="icon"></i>
-                        <div>
-                            <p class="social-label">Follow me on</p>
-                            <p class="social-handle">@${twitterURL || "twitter"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- LinkedIn -->
-                <div class="social-card social-linkedin">
-                    <div class="social-bg-icon">
-                        <i data-lucide="linkedin" class="icon-3xl"></i>
-                    </div>
-                    <div class="social-content">
-                        <i data-lucide="linkedin" class="icon"></i>
-                        <div>
-                            <p class="social-label">Connect on</p>
-                            <p class="social-handle">${linkedinURL || "LinkedIn"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Portfolio -->
-                <div class="social-card social-portfolio">
-                    <div class="social-bg-icon">
-                        <i data-lucide="globe" class="icon-3xl"></i>
-                    </div>
-                    <div class="social-content">
-                        <i data-lucide="globe" class="icon"></i>
-                        <div>
-                            <p class="social-label">Visit</p>
-                            <p class="social-handle" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                ${portfolioUrl ? (portfolioUrl.startsWith("https://") ? portfolioUrl.replace("https://", "") : portfolioUrl) : "Portfolio"}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GitHub Activity Graph -->
-            <div class="activity-card">
-                <div class="activity-header">
-                    <div class="activity-title">
-                        <i data-lucide="activity" class="icon text-green-400"></i>
-                        <h3>Activity Graph</h3>
-                    </div>
-                    <div class="activity-badge">Last 12 months</div>
-                </div>
-                <div class="activity-graph-container">
-                    ${githubURL ? `
-                        <img src="https://github-readme-activity-graph.vercel.app/graph?username=${githubURL}&bg_color=1f2937&color=10b981&line=059669&point=34d399&area=true&hide_border=true" alt="Activity graph" class="activity-graph" />
-                    ` : `
-                        <div class="activity-placeholder">
-                            <div style="text-align: center;">
-                                <i data-lucide="github" class="icon-lg" style="margin-bottom: 8px;"></i>
-                                <p style="font-size: 14px;">Enter GitHub username to see activity graph</p>
-                            </div>
-                        </div>
-                    `}
-                </div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="stats-card">
-                <div class="stats-bg">
-                    <i data-lucide="star" class="star-icon star-1" style="width: 24px; height: 24px;"></i>
-                    <i data-lucide="star" class="star-icon star-2" style="width: 24px; height: 24px;"></i>
-                    <i data-lucide="star" class="star-icon star-3" style="width: 24px; height: 24px;"></i>
-                    <i data-lucide="star" class="star-icon star-4" style="width: 24px; height: 24px;"></i>
-                    <i data-lucide="star" class="star-icon star-5" style="width: 24px; height: 24px;"></i>
-                </div>
-                <div class="stats-content">
-                    <div class="stats-title">Total Stars</div>
-                    <div>
-                        <div class="stats-number">${userStats["Star Earned"] || "0"}</div>
-                        <p class="stats-label">Stars earned across repositories</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mini Stats Grid -->
-            <div class="mini-stats">
-                <!-- Commits -->
-                <div class="mini-stat mini-stat-commits">
-                    <i data-lucide="git-commit" class="mini-stat-bg-icon-large icon-4xl" style="color: #10b981;"></i>
-                    <div class="mini-stat-content">
-                        <div class="mini-stat-number">${userStats.Commits || "0"}</div>
-                        <p class="mini-stat-label">Commits</p>
-                    </div>
-                </div>
-
-                <!-- Pull Requests -->
-                <div class="mini-stat mini-stat-prs">
-                    <i data-lucide="git-pull-request" class="mini-stat-bg-icon-large icon-4xl" style="color: #f472b6;"></i>
-                    <div class="mini-stat-content">
-                        <div class="mini-stat-number">${userStats["Pull Requests"] || "0"}</div>
-                        <p class="mini-stat-label">Pull Requests</p>
-                    </div>
-                </div>
-
-                <!-- Followers -->
-                <div class="mini-stat mini-stat-followers">
-                    <i data-lucide="users" class="mini-stat-bg-icon icon-4xl" style="color: white;"></i>
-                    <div class="mini-stat-content">
-                        <div class="mini-stat-number">${userStats.Followers || "0"}</div>
-                        <p class="mini-stat-label">Followers</p>
-                    </div>
-                </div>
-
-                <!-- Contributed To -->
-                <div class="mini-stat mini-stat-repos">
-                    <i data-lucide="git-branch" class="mini-stat-bg-icon icon-4xl" style="color: white;"></i>
-                    <div class="mini-stat-content">
-                        <div class="mini-stat-number">${userStats["Contributed To"] || "0"}</div>
-                        <p class="mini-stat-label">Contributed To</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Streak Stats -->
-            <div class="streak-grid">
-                <!-- Current Streak -->
-                <div class="current-streak">
-                    <div class="streak-bg">
-                        <i data-lucide="flame" class="streak-bg-icon icon-4xl"></i>
-                    </div>
-                    <div class="streak-content">
-                        <div class="streak-label">
-                            <span>Current Streak</span>
-                        </div>
-                        <div>
-                            <div class="streak-number">${contributionStats.currentStreak || "0"}</div>
-                            <p class="streak-days">days</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Longest Streak -->
-                <div class="longest-streak">
-                    <i data-lucide="trophy" class="longest-streak-bg-icon icon-xl" style="color: white;"></i>
-                    <div class="longest-streak-content">
-                        <div class="longest-streak-number">${contributionStats.longestStreak || "0"}</div>
-                        <p class="longest-streak-label">Longest Streak</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contribution Graph -->
-            <div class="contribution-card">
-                <div class="contribution-header">
-                    <div class="contribution-title">
-                        <i data-lucide="calendar" class="icon text-green-400"></i>
-                        <h3>Contribution Graph</h3>
-                    </div>
-                    <div class="contribution-legend">
-                        <span>Less</span>
-                        <div class="legend-dots">
-                            <div class="legend-dot" style="background-color: #0d1117;"></div>
-                            <div class="legend-dot" style="background-color: #0e4429;"></div>
-                            <div class="legend-dot" style="background-color: #006d32;"></div>
-                            <div class="legend-dot" style="background-color: #26a641;"></div>
-                            <div class="legend-dot" style="background-color: #39d353;"></div>
-                        </div>
-                        <span>More</span>
-                    </div>
-                </div>
-                <div class="contribution-graph">
-                    ${graphSVG || '<div style="text-align: center; color: #9ca3af; padding: 40px;">Loading contribution graph...</div>'}
-                </div>
-            </div>
-
-            <!-- Branding -->
-            <div class="branding">
-                <div class="branding-card">
-                    <p class="branding-text">
-                        Powered by <span class="branding-highlight">Open Dev Society</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
-    </script>
-</body>
-</html>`;
-}
-
-function generateMinimalHTML(data: any): string {
-    const { name, githubURL, imageUrl, userStats, contributionStats } = data;
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Open Readme - Minimal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <style>
-      body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        margin: 0;
-        padding: 40px;
-        background: white;
-        color: #1f2937;
-        width: 800px;
-        height: 600px;
-        box-sizing: border-box;
-      }
-      .container {
-        max-width: 720px;
-        margin: 0 auto;
-        text-align: center;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-      .profile-img {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        margin: 0 auto 24px auto;
-        object-fit: cover;
-      }
-      .name {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 8px;
-      }
-      .username {
-        font-size: 1.25rem;
-        color: #6b7280;
-        margin-bottom: 48px;
-      }
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 24px;
-        margin-bottom: 48px;
-      }
-      .stat-card {
-        padding: 24px;
-        background: #f9fafb;
-        border-radius: 12px;
-        text-align: center;
-      }
-      .stat-number {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 8px;
-      }
-      .stat-label {
-        font-size: 0.875rem;
-        color: #6b7280;
-      }
-      .blue { color: #3b82f6; }
-      .green { color: #10b981; }
-      .purple { color: #8b5cf6; }
-      .orange { color: #f59e0b; }
-      .footer {
-        font-size: 0.875rem;
-        color: #6b7280;
-      }
-      .footer strong {
-        font-weight: 600;
-      }
-    </style>
-</head>
-<body>
-    <div class="container">
-      ${imageUrl ? `<img src="${imageUrl}" alt="${name}" class="profile-img" />` : ''}
-      <h1 class="name">${name || "Your Name"}</h1>
-      <p class="username">@${githubURL || "username"}</p>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-number blue">${userStats?.Commits || "0"}</div>
-          <div class="stat-label">Commits</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number green">${userStats?.["Star Earned"] || "0"}</div>
-          <div class="stat-label">Stars</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number purple">${userStats?.["Pull Requests"] || "0"}</div>
-          <div class="stat-label">PRs</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number orange">${contributionStats?.currentStreak || "0"}</div>
-          <div class="stat-label">Streak</div>
-        </div>
-      </div>
-
-      <p class="footer">
-        Powered by <strong>Open Dev Society</strong>
-      </p>
-    </div>
-</body>
-</html>`;
-}
-
-function generateThemeHTML(theme: string, data: any): string {
-  switch (theme) {
-    case 'bento':
-      return generateBentoHTML(data);
-    case 'minimal':
-      return generateMinimalHTML(data);
-    default:
-      return generateBentoHTML(data); // fallback to bento
-  }
-}
-
-export async function GET(req: NextRequest) {
-  const startTime = Date.now();
-
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const directResponse = searchParams.get("direct") === "true";
-
-    // If not a direct request, return error
-    if (!directResponse) {
-        return NextResponse.json(
-            { error: "Use direct=true parameter for auto-updating images" },
-            { status: 400 }
-        );
-    }
-
-    // Get theme parameter
-    const theme = searchParams.get("theme") || "bento";
-
-    const username = extractUsername(req);
-    const n = decodeURIComponent(searchParams.get("n") || "").trim();
-    const g = decodeURIComponent(searchParams.get("g") || username).trim();
-    const i = decodeURIComponent(searchParams.get("i") || "").trim();
-    const x = decodeURIComponent(searchParams.get("x") || "").trim();
-    const l = decodeURIComponent(searchParams.get("l") || "").trim();
-    const p = decodeURIComponent(searchParams.get("p") || "").trim();
-
-    if (!isValidGitHubUsername(g)) {
+    const body = await req.json().catch(() => ({}))
+    const username = extractUsername(req, body)
+    if (!isValidGitHubUsername(username)) {
       return NextResponse.json(
         { error: "Valid GitHub username is required (2-39 characters)" },
         { status: 400 }
@@ -1112,30 +221,42 @@ export async function GET(req: NextRequest) {
     // Enhanced rate limiting for public safety
     const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
     const rateLimitResult = rateLimit(clientIP, {
-        windowMs: 5 * 60 * 1000, // 5 minutes
-        maxRequests: 20 // Generous limit for direct API usage
+        windowMs: 10 * 60 * 1000, // 10 minutes
+        maxRequests: 10 // Increased from 3 to 10 for development
     });
 
     if (!rateLimitResult.allowed) {
-        return new NextResponse(JSON.stringify({
-            error: "Rate limit exceeded",
-            message: "Too many requests. Please wait before generating another image.",
-            retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
-        }), {
-            status: 429,
-            headers: { "Content-Type": "application/json" }
-        });
+        return new NextResponse(
+            JSON.stringify({
+                error: "Rate limit exceeded",
+                message: "Too many requests. Please wait before generating another image.",
+                retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+            }),
+            {
+                status: 429,
+                headers: { "Content-Type": "application/json" }
+            }
+        );
     }
+
+    const { searchParams } = new URL(req.url);
+    const n = decodeURIComponent(searchParams.get("n") || "").trim();
+    const g = decodeURIComponent(searchParams.get("g") || username).trim(); // prefer query g or extracted username
+    const i = decodeURIComponent(searchParams.get("i") || "").trim();
+    const x = decodeURIComponent(searchParams.get("x") || "").trim();
+    const l = decodeURIComponent(searchParams.get("l") || "").trim();
+    const p = decodeURIComponent(searchParams.get("p") || "").trim();
+    const uniqueId = decodeURIComponent(searchParams.get("z") || "");
 
     // Validate image URL if provided
     if (i && !i.startsWith('https://')) {
-        return new NextResponse(JSON.stringify({ error: "Image URL must use HTTPS" }), {
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-        });
+        return new NextResponse(
+            JSON.stringify({ error: "Image URL must use HTTPS" }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+        );
     }
 
-    console.log(`[${new Date().toISOString()}] 🎨 Generating ${theme} theme image for user: ${g}`);
+    console.log(`[${new Date().toISOString()}] 🎨 Generating image for user: ${g}`);
 
     // Fetch GitHub data
     let userStats: any = {};
@@ -1145,24 +266,11 @@ export async function GET(req: NextRequest) {
     if (g) {
         try {
             const currentYear = new Date().getFullYear();
-
-            // Parallel data fetching with timeout
-            const dataPromise = Promise.all([
-                fetchUserData(g),
-                fetchContributions(g),
-                fetchYearContributions(g, currentYear)
-            ]);
-
-            const dataResult = await Promise.race([
-                dataPromise,
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Data fetch timeout')), 8000)
-                )
-            ]) as any[];
-
-            userStats = dataResult[0].userStats;
-            contributionStats = dataResult[1];
-            graphSVG = generateContributionGraph(dataResult[2]);
+            const contributionDays = await fetchYearContributions(g, currentYear);
+            graphSVG = generateContributionGraph(contributionDays);
+            const userData = await fetchUserData(g);
+            userStats = userData.userStats;
+            contributionStats = await fetchContributions(g);
         } catch (error) {
             console.error("❌ Error fetching GitHub data:", error);
             userStats = {};
@@ -1170,18 +278,293 @@ export async function GET(req: NextRequest) {
         }
     }
 
-    // Generate HTML based on selected theme
-    const html = generateThemeHTML(theme, {
-        name: n,
-        githubURL: g,
-        imageUrl: i,
-        twitterURL: x,
-        linkedinURL: l,
-        portfolioUrl: p,
-        userStats,
-        contributionStats,
-        graphSVG
-    });
+    // Beautiful HTML template matching the bento grid design
+    /* stylelint-disable */
+    const html = `<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Open Readme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: 'Space Grotesk', sans-serif;
+        margin: 0;
+        padding: 20px 0;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+      .contribution-graph {
+        max-height: 200px;
+        overflow: visible;
+      }
+      .main-container {
+        width: 1160px;
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      .grid-container {
+        min-height: 1100px;
+      }
+      /* Fix icon sizes */
+      .background-icon {
+        opacity: 0.1 !important;
+      }
+      .foreground-icon {
+        opacity: 1 !important;
+      }
+    </style>
+  </head>
+  <body class="bg-neutral-950 text-white">
+    <div class="main-container">
+      <div class="relative grid w-full grid-cols-12 gap-4 mx-auto mb-8 grid-container">
+
+        <!-- Hero/Name Card -->
+        <div class="col-span-12 row-span-2 md:col-span-4 lg:col-span-3 group">
+          <div class="relative h-full min-h-[260px] p-8 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 shadow-2xl">
+            <div class="absolute inset-0 opacity-20">
+              <div class="absolute top-0 left-0 w-20 h-20 -translate-x-10 -translate-y-10 bg-white rounded-full animate-pulse"></div>
+              <div class="absolute bottom-0 right-0 w-24 h-24 translate-x-12 translate-y-12 bg-white rounded-full animate-pulse"></div>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full text-white">
+              <div class="flex items-center justify-between">
+                <i data-lucide="sparkles" class="w-6 h-6 text-yellow-300 animate-pulse foreground-icon"></i>
+                <div class="px-3 py-1 text-lg font-medium rounded-full bg-white/20 backdrop-blur">Developer</div>
+              </div>
+              <div>
+                <p class="mb-2 text-xl font-medium opacity-90">Hello, I'm</p>
+                <h1 class="text-5xl font-bold leading-tight">${n || "Your Name"}</h1>
+                <p class="mt-3 text-white/80 text-md">Building the future, one commit at a time</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Image -->
+        <div class="col-span-12 row-span-3 md:col-span-8 lg:col-span-6 group">
+          <div class="relative h-full min-h-[300px] overflow-hidden rounded-3xl shadow-2xl">
+            ${i ? `<img src="${i}" alt="${n || 'Profile'}" class="object-cover w-full h-full" style="width: 100%; height: 100%;" />` : `
+              <div class="flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-800">
+                <div class="text-center text-gray-600 dark:text-gray-300">
+                  <i data-lucide="user" class="w-16 h-16 mx-auto mb-4 foreground-icon"></i>
+                  <p class="text-lg font-medium">Add your profile image</p>
+                  <p class="mt-2 text-sm opacity-75">Upload an image URL in the form above</p>
+                </div>
+              </div>
+            `}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+            <!-- Floating info card -->
+            <div class="absolute bottom-6 left-6 right-6">
+              <div class="p-4 border bg-white/10 backdrop-blur-md rounded-2xl border-white/20">
+                <div class="flex items-center justify-between text-white">
+                  <div>
+                    <p class="text-sm opacity-80">GitHub Profile</p>
+                    <p class="font-semibold">@${g || "username"}</p>
+                  </div>
+                  <i data-lucide="github" class="w-5 h-5 foreground-icon"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Links Grid -->
+        <div class="grid grid-cols-1 col-span-12 row-span-3 gap-4 lg:col-span-3">
+          <!-- Twitter -->
+          <div class="group relative h-full min-h-[120px] p-6 bg-gradient-to-br from-sky-400 to-blue-600 rounded-2xl overflow-hidden shadow-lg">
+            <div class="absolute -top-2 -right-2 background-icon">
+              <i data-lucide="twitter" class="w-12 h-12"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full text-white">
+              <i data-lucide="twitter" class="w-5 h-5 foreground-icon"></i>
+              <div>
+                <p class="text-md opacity-80">Follow me on</p>
+                <p class="font-semibold text-xl">@${x || "twitter"}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- LinkedIn -->
+          <div class="group relative h-full min-h-[120px] p-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl overflow-hidden shadow-lg">
+            <div class="absolute -top-2 -right-2 background-icon">
+              <i data-lucide="linkedin" class="w-12 h-12"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full text-white">
+              <i data-lucide="linkedin" class="w-5 h-5 foreground-icon"></i>
+              <div>
+                <p class="text-md opacity-80">Connect on</p>
+                <p class="font-semibold text-xl">${l || "LinkedIn"}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Portfolio -->
+          <div class="group relative h-full min-h-[120px] p-6 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl overflow-hidden shadow-lg">
+            <div class="absolute -top-2 -right-2 background-icon">
+              <i data-lucide="globe" class="w-12 h-12"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full text-white">
+              <i data-lucide="globe" class="w-5 h-5 foreground-icon"></i>
+              <div>
+                <p class="text-md opacity-80">Visit</p>
+                <p class="font-semibold text-xl truncate">${p ? (p.startsWith("https://") ? p.replace("https://", "") : p) : "Portfolio"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GitHub Activity Graph - Fixed Height -->
+        <div class="col-span-12 row-span-1">
+          <div class="relative h-full min-h-[180px] p-6 bg-gradient-to-r from-gray-800 to-gray-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <i data-lucide="activity" class="w-5 h-5 text-green-400 foreground-icon"></i>
+                <h3 class="text-lg font-semibold text-white">Activity Graph</h3>
+              </div>
+              <div class="px-3 py-1 text-md font-medium text-green-400 rounded-full bg-green-400/10">Last 12 months</div>
+            </div>
+            <div class="w-full h-full">
+              ${g ? `<img src="https://github-readme-activity-graph.vercel.app/graph?username=${g}&bg_color=1f2937&color=10b981&line=059669&point=34d399&area=true&hide_border=true" alt="Activity graph" class="object-cover w-full h-full rounded-xl" style="height: 100%; width: 100%;" />` : `
+                <div class="flex items-center justify-center w-full h-20 bg-gray-700 rounded-xl">
+                  <div class="text-center text-gray-400">
+                    <i data-lucide="github" class="w-6 h-6 mx-auto mb-2 foreground-icon"></i>
+                    <p class="text-md">Enter GitHub username to see activity graph</p>
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Stars - Hero Card -->
+        <div class="col-span-12 row-span-2 md:col-span-6 lg:col-span-4">
+          <div class="relative h-full min-h-[200px] p-6 bg-gradient-to-br from-yellow-600 to-orange-700 rounded-3xl overflow-hidden shadow-xl">
+            <div class="absolute inset-0 background-icon opacity-70">
+              <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 20%; left: 10%;"></i>
+              <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 35%; left: 30%; animation-delay: 0.5s;"></i>
+              <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 50%; left: 50%; animation-delay: 1s;"></i>
+              <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 65%; left: 70%; animation-delay: 1.5s;"></i>
+              <i data-lucide="star" class="absolute w-6 h-6 text-yellow-300 animate-pulse" style="top: 80%; left: 90%; animation-delay: 2s;"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full text-white">
+              <div class="flex items-center gap-2">
+                <span class="text-3xl font-medium">Total Stars</span>
+              </div>
+              <div>
+                <div class="mb-2 font-bold text-7xl">${userStats["Star Earned"] || "0"}</div>
+                <p class="text-white/80 text-md">Stars earned across repositories</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Mini Grid -->
+        <div class="grid grid-cols-2 col-span-12 row-span-2 gap-4 md:col-span-6 lg:col-span-4">
+          <!-- Commits -->
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl">
+            <i data-lucide="git-commit" class="absolute w-24 h-24 text-green-300 opacity-100 -top-2 right-2"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats.Commits || "0"}</div>
+              <p class="text-md opacity-80">Commits</p>
+            </div>
+          </div>
+
+          <!-- Pull Requests -->
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl">
+            <i data-lucide="git-pull-request" class="absolute w-24 h-24 text-pink-300 opacity-100 top-2 right-2"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats["Pull Requests"] || "0"}</div>
+              <p class="text-md opacity-80">Pull Requests</p>
+            </div>
+          </div>
+
+          <!-- Followers -->
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl">
+            <i data-lucide="users" class="absolute w-24 h-24 text-white top-2 right-2 opacity-20"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats.Followers || "0"}</div>
+              <p class="text-md opacity-80">Followers</p>
+            </div>
+          </div>
+
+          <!-- Contributed To -->
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl">
+            <i data-lucide="git-branch" class="absolute w-24 h-24 text-white top-2 right-2 opacity-20"></i>
+            <div class="relative z-10 text-white top-1/2">
+              <div class="text-5xl font-bold">${userStats["Contributed To"] || "0"}</div>
+              <p class="text-md opacity-80">Contributed To</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Streak Stats -->
+        <div class="grid col-span-12 grid-rows-3 row-span-2 gap-4 lg:col-span-4">
+          <!-- Current Streak -->
+          <div class="relative row-span-2 p-6 overflow-hidden shadow-xl bg-gradient-to-br from-orange-600 to-red-700 rounded-2xl">
+            <div class="absolute inset-0 text-orange-500 opacity-100">
+              <i data-lucide="flame" class="absolute w-24 h-24 top-4 right-4"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full text-white">
+              <div class="flex items-center gap-2">
+                <span class="font-medium">Current Streak</span>
+              </div>
+              <div>
+                <div class="mb-1 font-bold text-7xl">${contributionStats.currentStreak || "0"}</div>
+                <p class="text-md text-white/80">days</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Longest Streak -->
+          <div class="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl">
+            <i data-lucide="trophy" class="absolute w-12 h-12 text-white opacity-100 top-2 right-2"></i>
+            <div class="relative z-10 text-white">
+              <div class="text-3xl font-bold">${contributionStats.longestStreak || "0"}</div>
+              <p class="text-md opacity-80">Longest Streak</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contribution Graph -->
+        <div class="col-span-12 row-span-1">
+          <div class="relative h-full min-h-[280px] p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl overflow-hidden shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <i data-lucide="calendar" class="w-5 h-5 text-green-400 foreground-icon"></i>
+                <h3 class="text-2xl font-semibold text-white">Contribution Graph</h3>
+              </div>
+              <div class="flex items-center gap-2 text-lg text-gray-400">
+                <span>Less</span>
+                <div class="flex gap-1">
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #0d1117"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #0e4429"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #006d32"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #26a641"></div>
+                  <div class="w-3 h-3 rounded-sm" style="background-color: #39d353"></div>
+                </div>
+                <span>More</span>
+              </div>
+            </div>
+            <div class="contribution-graph w-full h-full overflow-visible">
+              ${graphSVG}
+            </div>
+          </div>
+        </div>
+
+        <!-- Open Dev Society Branding -->
+        <div class="absolute z-20 -bottom-4 -right-2">
+          <div class="px-3 py-1 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl shadow-lg transform -rotate-3">
+            <p class="text-xl font-medium text-white">Powered by <span class="font-bold">Open Dev Society</span></p>
+          </div>
+        </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>lucide.createIcons();</script>
+  </body>
+</html>`;
+    /* stylelint-enable */
 
     if (!process.env.GITHUB_TOKEN) {
         throw new Error("GitHub token not configured");
@@ -1196,8 +579,8 @@ export async function GET(req: NextRequest) {
         const chromium = await import('@sparticuz/chromium');
         const puppeteerCore = await import('puppeteer-core');
         browser = await puppeteerCore.default.launch({
-            args: [...chromium.default.args, '--disable-web-security'],
-            defaultViewport: { width: 1200, height: 800 },
+            args: chromium.default.args,
+            defaultViewport: { width: 1400, height: 1800 },
             executablePath: await chromium.default.executablePath(),
             headless: true,
         });
@@ -1208,64 +591,62 @@ export async function GET(req: NextRequest) {
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
-                '--disable-web-security'
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
             ],
-            defaultViewport: { width: 1200, height: 800 },
+            defaultViewport: { width: 1400, height: 1800 },
             headless: true,
         });
     }
 
     const page = await browser.newPage();
-    await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: 1.5 });
+    await page.setViewport({ width: 1400, height: 1800, deviceScaleFactor: 1.5 });
     await page.setContent(html, { waitUntil: "networkidle0" });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // Wait for fonts and icons to load
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const screenshot = await page.screenshot({
-        type: "png",
-        fullPage: false,
-        clip: { x: 0, y: 0, width: 1200, height: 800 }
-    }) as Buffer;
-
+    const screenshot = await page.screenshot({ type: "png", fullPage: true }) as Buffer;
     await browser.close();
 
-    // Log usage for direct requests
-    logDirectUsage(g, theme);
-
-    const endTime = Date.now();
-    console.log(`✅ Returning ${theme} theme image for user: ${g} in ${endTime - startTime}ms`);
-
-    // GitHub-friendly headers for 1-hour caching
-    return new NextResponse(screenshot as BodyInit, {
-        headers: {
-            "Content-Type": "image/png",
-            "Content-Length": screenshot.length.toString(),
-            "Cache-Control": "public, max-age=3600, s-maxage=3600", // 1 hour cache
-            "Expires": new Date(Date.now() + 3600000).toUTCString(), // 1 hour from now
-            "Last-Modified": new Date().toUTCString(),
-            "ETag": `"${Math.floor(Date.now() / 3600000)}"`, // Changes every hour
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "X-Content-Type-Options": "nosniff",
-            "Vary": "Accept-Encoding",
-            "X-Generated-For": g,
-            "X-Generated-At": new Date().toISOString(),
-            "X-Theme": theme,
-            "X-Cache-Duration": "3600", // 1 hour indicator
-            "X-Generation-Time": `${endTime - startTime}ms`,
-        },
-    });
-
+    // Upload to GitHub
+    try {
+        const imageUrl = await uploadToGitHubSafely(screenshot, process.env.GITHUB_TOKEN, g, uniqueId);
+        return new NextResponse(JSON.stringify({
+            url: imageUrl,
+            method: "github",
+            message: "Image uploaded to GitHub successfully",
+            timestamp: new Date().toISOString(),
+            user: g
+        }), {
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "public, max-age=3600",
+            },
+        });
+    } catch (uploadError: any) {
+        console.error("❌ GitHub upload failed:", uploadError);
+        const base64 = screenshot.toString('base64');
+        return new NextResponse(JSON.stringify({
+            url: `data:image/png;base64,${base64}`,
+            method: "base64_fallback",
+            message: "GitHub upload failed, using base64 fallback",
+            warning: "Base64 images may not display properly in GitHub README",
+            error: uploadError instanceof Error ? uploadError.message : String(uploadError)
+        }), {
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "public, max-age=300",
+            },
+        });
+    }
   } catch (error: any) {
-    const endTime = Date.now();
-    console.error("💥 Direct image generation error:", error);
+    console.error("💥 Image generation error:", error);
     return new NextResponse(JSON.stringify({
         error: "Failed to generate image",
         message: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
-        duration: `${endTime - startTime}ms`,
+        stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
     }), {
         status: 500,
         headers: { "Content-Type": "application/json" }
@@ -1273,10 +654,58 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Remove POST method since we're focusing on direct GET requests
-export async function POST(_req: NextRequest) {
-    return NextResponse.json(
-        { error: "Use GET method with direct=true parameter for auto-updating images" },
-        { status: 405 }
-    );
+const githubToken = process.env.GITHUB_TOKEN_IMAGES
+
+function ghHeaders() {
+  return {
+    Authorization: `token ${githubToken}`,
+    Accept: 'application/vnd.github.v3+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+}
+
+function assertToken() {
+  if (!githubToken) {
+    throw new Error('Missing GITHUB_TOKEN_IMAGES env var in Vercel')
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}))
+    const username = extractUsername(req, body)
+    if (!isValidGitHubUsername(username)) {
+      return NextResponse.json(
+        { error: "Valid GitHub username is required (2-39 characters)" },
+        { status: 400 }
+      )
+    }
+    assertToken()
+
+    // Example read call to images repo
+    const statsFile = 'path/to/image.png' // your logic here
+    const ghRes = await fetch(
+      `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${statsFile}`,
+      { headers: ghHeaders(), cache: 'no-store' }
+    )
+    if (!ghRes.ok) {
+      const msg = await ghRes.text()
+      return NextResponse.json({ error: `GitHub API failed: ${ghRes.status} ${msg}` }, { status: 502 })
+    }
+    const data = await ghRes.json()
+    const url = `https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/${data.path}`
+
+    return NextResponse.json({ url })
+  } catch (error: any) {
+    console.error("💥 Image retrieval error:", error);
+    return new NextResponse(JSON.stringify({
+        error: "Failed to retrieve image",
+        message: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+        stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+    }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+    });
+  }
 }

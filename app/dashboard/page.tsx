@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import InputBlock from "@/components/InputBlock";
-import { MainGenerator } from "@/components/readme-generator/MainGenerator";
+import ThemeSelector from "@/components/ThemeSelector";
+import { getThemeComponent, type ThemeId } from "@/themes";
 import type { Graph, StreakStats, UserStats } from "@/types";
 
 export default function DashboardPage() {
@@ -18,6 +19,9 @@ export default function DashboardPage() {
   const [streak, setStreak] = useState<StreakStats | undefined>(undefined);
   const [graph, setGraph] = useState<Graph[] | undefined>(undefined);
 
+  const [theme, setTheme] = useState<ThemeId>("bento1"); // Ensure "bento1" is a valid ThemeId
+  const ThemedGrid = getThemeComponent(theme);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10">
       <Navbar />
@@ -29,13 +33,13 @@ export default function DashboardPage() {
             Create Your Profile
           </h1>
           <p className="max-w-2xl mx-auto text-xl text-muted-foreground">
-            Fill in your details to generate a beautiful auto-updating GitHub profile README
+            Fill in your details to generate a beautiful GitHub profile README
           </p>
         </div>
 
         {/* Input Section */}
         <div className="mb-12">
-          <h2 className="flex items-center gap-2 mb-6 text-2xl font-semibold text-white">
+          <h2 className="flex items-center gap-2 mb-6 text-2xl font-semibold">
             <div className="flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-teal-500 rounded-full">
               1
             </div>
@@ -56,17 +60,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Theme Selection & Generation Section */}
+        {/* Preview Section */}
         <div className="mb-8">
-          <h2 className="flex items-center gap-2 mb-6 text-2xl font-semibold text-white">
-            <div className="flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-purple-500 rounded-full">
-              2
-            </div>
-            Choose Theme & Generate
-          </h2>
+          <div className="flex flex-col items-start justify-between mb-6 md:items-center md:flex-row">
+            <h2 className="flex items-center gap-2 text-2xl font-semibold">
+              <div className="flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-purple-500 rounded-full">
+                2
+              </div>
+              Preview & Generate
+            </h2>
+            <ThemeSelector value={theme} onChange={setTheme} />
+          </div>
 
-          <div className="p-4 border md:p-8 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-2xl border-secondary">
-            <MainGenerator
+          <div className="p-2 border md:p-8 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-2xl border-secondary">
+            <ThemedGrid
               name={name}
               githubURL={githubURL}
               twitterURL={twitterURL}
@@ -79,39 +86,6 @@ export default function DashboardPage() {
             />
           </div>
         </div>
-
-        {/* Instructions Section */}
-        <div className="mb-12">
-          <h2 className="flex items-center gap-2 mb-6 text-2xl font-semibold text-white">
-            <div className="flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-green-500 rounded-full">
-              3
-            </div>
-            How to Use
-          </h2>
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="p-6 border border-gray-700 bg-gray-800/50 rounded-xl">
-              <h3 className="mb-2 text-lg font-semibold text-white">1. Customize</h3>
-              <p className="text-sm text-gray-400">
-                Fill in your information and choose your favorite theme. Preview how it looks in real-time.
-              </p>
-            </div>
-
-            <div className="p-6 border border-gray-700 bg-gray-800/50 rounded-xl">
-              <h3 className="mb-2 text-lg font-semibold text-white">2. Generate</h3>
-              <p className="text-sm text-gray-400">
-                Click generate to create your auto-updating image URL. No setup required!
-              </p>
-            </div>
-
-            <div className="p-6 border border-gray-700 bg-gray-800/50 rounded-xl">
-              <h3 className="mb-2 text-lg font-semibold text-white">3. Copy & Paste</h3>
-              <p className="text-sm text-gray-400">
-                Copy the markdown code and paste it into your GitHub README.md file. It updates automatically!
-              </p>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   );

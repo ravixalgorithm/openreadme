@@ -1,46 +1,58 @@
 /* eslint-disable react/no-unescaped-entities */
-import React from "react";
+/*bento1.tsx*/
+import { useState } from "react";
 import { Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
+import confetti from "canvas-confetti";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
     Activity,
+    AlertTriangle,
     Calendar,
+    Clipboard,
+    Download,
+    FileText,
     Flame,
     GitBranch,
     Github,
     GitPullRequest,
+    Link2,
     Linkedin,
+    Loader2,
     Star,
     Trophy,
     Twitter,
     Users,
+    X,
     Globe,
+    Code2,
     GitCommit,
     Sparkles,
 } from "lucide-react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { Graph, StreakStats, UserStats } from "@/types";
 import { generateContributionGraph } from "@/utils/generate-graph";
+import { toast } from "sonner";
 import Image from "next/image";
-import { User } from "lucide-react";
+import Link from "next/link";
+import { generateRandomString } from "@/utils/calculations";
+import { TextShimmer } from "../ui/text-shimmer";
+import { User, Zap } from "lucide-react";
+
+const randomId = generateRandomString(5);
 
 const space = Space_Grotesk({
     subsets: ["latin"],
     weight: ["400", "300", "600", "700", "500"],
 });
 
-interface BentoClassicProps {
-    name: string;
-    githubURL: string;
-    twitterURL: string;
-    linkedinURL: string;
-    imageUrl: string;
-    stats: UserStats | undefined;
-    streak: StreakStats | undefined;
-    graph: Graph[] | undefined;
-    portfolioUrl: string;
-}
-
-const BentoClassic = ({
+const OpenReadmeGrid = ({
     name,
     githubURL,
     twitterURL,
@@ -50,7 +62,22 @@ const BentoClassic = ({
     streak,
     graph,
     portfolioUrl,
-}: BentoClassicProps) => {
+}: {
+    name: string;
+    githubURL: string;
+    twitterURL: string;
+    linkedinURL: string;
+    imageUrl: string;
+    stats: UserStats | undefined;
+    streak: StreakStats | undefined;
+    graph: Graph[] | undefined;
+    portfolioUrl: string;
+}) => {
+    const [imageLink, setImageLink] = useState<string>("");
+    const [loading, setLoading] = useState(false);
+    const [isGenerated, setIsGenerated] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+
     const getColor = (value: number) => {
         switch (value) {
             case 0:
@@ -66,6 +93,115 @@ const BentoClassic = ({
             default:
                 return "#161b22";
         }
+    };
+
+    const handleDownload = async () => {
+        try {
+            const yamlLink = document.createElement("a");
+            yamlLink.href = "/update-openreadme.yml";
+            yamlLink.download = "update-openreadme.yml";
+            document.body.appendChild(yamlLink);
+            yamlLink.click();
+            document.body.removeChild(yamlLink);
+            window.URL.revokeObjectURL(yamlLink.href);
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            const response = await fetch("/get-openreadme.ts.template");
+            if (!response.ok) {
+                throw new Error(`Failed to fetch template: ${response.statusText}`);
+            }
+
+            let fileContent = await response.text();
+
+            const apiUrl = `${window.location.origin}/api/openreadme?n=${encodeURIComponent(
+                name,
+            )}&g=${encodeURIComponent(githubURL)}&x=${encodeURIComponent(
+                twitterURL,
+            )}&l=${encodeURIComponent(linkedinURL)}&i=${encodeURIComponent(
+                imageUrl,
+            )}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(
+                randomId,
+            )}`;
+
+            fileContent = `const apiUrl = "${apiUrl}";\n` + fileContent;
+
+            const blob = new Blob([fileContent], { type: "text/typescript" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "get-openreadme.ts";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            toast.success("Files downloaded successfully");
+        } catch (error) {
+            console.error("Error downloading file:", error);
+            toast.error("Error downloading file");
+        }
+    };
+
+    const handleGenerateLink = async () => {
+    if (isGenerated) {
+        setIsOpen(true);
+        return;
+    }
+    setLoading(true);
+    setIsGenerated(false);
+
+    // Ensure name is not empty
+    const displayName = name || githubURL || "Developer";
+
+    const apiURL = `/api/openreadme?n=${encodeURIComponent(
+        displayName,
+    )}&i=${encodeURIComponent(imageUrl)}&g=${encodeURIComponent(
+        githubURL,
+    )}&x=${encodeURIComponent(twitterURL)}&l=${encodeURIComponent(
+        linkedinURL,
+    )}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(randomId)}`;
+
+    try {
+        const res = await fetch(apiURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                github: githubURL // Also pass username in body as fallback
+            })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${res.status} - ${errorText}`);
+        }
+
+        const data = await res.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        setImageLink(data.url);
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+        });
+        setIsGenerated(true);
+        setIsOpen(true);
+    } catch (error) {
+        console.error("Error generating or uploading the image:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+        setLoading(false);
+    }
+};
+
+    const copyToClipboard = async () => {
+        await navigator.clipboard.writeText(`![OpenReadme](${imageLink})`);
+        toast.success("Copied to clipboard");
     };
 
     return (
@@ -109,7 +245,7 @@ const BentoClassic = ({
                                 alt={name || "Profile"}
                                 fill
                                 className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                onError={(_e) => {
+                                onError={(e) => {
                                     console.error("Image failed to load:", imageUrl);
                                 }}
                             />
@@ -195,7 +331,7 @@ const BentoClassic = ({
 
                 {/* GitHub Activity Graph - Enhanced */}
                 <div className="col-span-12 row-span-1">
-                    <div className="relative h-full min-h-[180px] p-4 bg-gradient-to-r from-gray-800 to-gray-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div className="relative h-full min-h-[180px] p-6 bg-gradient-to-r from-gray-800 to-gray-800 rounded-3xl overflow-hidden shadow-xl">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-6 h-6 text-green-400" />
@@ -209,10 +345,10 @@ const BentoClassic = ({
                             <Image
                                 src={`https://github-readme-activity-graph.vercel.app/graph?username=${githubURL}&bg_color=1f2937&color=10b981&line=059669&point=34d399&area=true&hide_border=true`}
                                 alt="Activity graph"
-                                width={0}
-                                height={0}
-                                className="object-contain w-full h-full rounded-xl"
-                                onError={(_e) => {
+                                width={800}
+                                height={120}
+                                className="object-cover w-full h-full rounded-xl"
+                                onError={(e) => {
                                     console.error("Activity graph failed to load");
                                 }}
                             />
@@ -248,6 +384,7 @@ const BentoClassic = ({
                                 </div>
                                 <div className="relative z-10 flex flex-col justify-between h-full text-white">
                                     <div className="flex items-center gap-2">
+
                                         <span className="text-3xl font-medium">Total Stars</span>
                                     </div>
                                     <div>
@@ -275,6 +412,7 @@ const BentoClassic = ({
                             <div className="relative p-4 overflow-hidden shadow-lg bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl">
                                 <GitPullRequest className="absolute w-24 h-24 text-pink-300 opacity-100 top-2 right-2" />
                                 <div className="relative z-10 text-white top-1/2">
+
                                     <div className="text-5xl font-bold">{stats["Pull Requests"] || "0"}</div>
                                     <p className="text-xs opacity-80">Pull Requests</p>
                                 </div>
@@ -334,7 +472,7 @@ const BentoClassic = ({
                 {/* Contribution Graph - Enhanced */}
                 {graph && (
                     <div className="col-span-12 row-span-1">
-                        <div className="relative h-full p-6 overflow-hidden shadow-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl">
+                        <div className="relative h-full min-h-[300px] p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl overflow-hidden shadow-xl">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <Calendar className="w-6 h-6 text-green-400" />
@@ -376,8 +514,159 @@ const BentoClassic = ({
                     </div>
                 </div>
             </div>
+
+            {/* Generate Button Section - Enhanced */}
+            {githubURL && (
+                <div className="flex flex-col items-center justify-center w-full gap-4 mb-8">
+                    <Button
+                        onClick={handleGenerateLink}
+                        size="lg"
+                        className="px-8 py-6 text-lg font-semibold text-white transition-all duration-300 transform shadow-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 rounded-2xl hover:scale-105 hover:shadow-2xl"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Zap className="w-5 h-5 mr-2" />
+                                Generate README Image
+                            </>
+                        )}
+                    </Button>
+
+                    {loading && (
+                        <TextShimmer className="text-sm tracking-wide text-muted-foreground">
+                            Creating your beautiful profile... This may take up to 10 seconds
+                        </TextShimmer>
+                    )}
+
+                    {/* Enhanced Alert Dialog */}
+                    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+                        <AlertDialogContent className="max-w-3xl overflow-hidden border-gray-700 shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl">
+                            <AlertDialogHeader className="relative pb-6">
+                                <div className="absolute inset-0 bg-gradient-to-r from-teal-500/10 to-cyan-500/10"></div>
+                                <AlertDialogTitle className="relative mb-2 text-3xl font-bold text-white">
+                                    🎉 Your Open Readme is Ready!
+                                </AlertDialogTitle>
+                                <p className="relative text-gray-300">
+                                    Your beautiful GitHub profile has been generated successfully
+                                </p>
+                                <Button
+                                    variant="ghost"
+                                    className="absolute top-0 right-0 text-gray-400 hover:text-white"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </AlertDialogHeader>
+
+                            {/* Warning Note - Enhanced */}
+                            <div className="p-4 mb-6 border bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20 rounded-xl">
+                                <div className="flex items-center gap-3 text-amber-400">
+                                    <AlertTriangle className="flex-shrink-0 w-5 h-5" />
+                                    <div>
+                                        <p className="font-medium">Important Setup Information</p>
+                                        <p className="mt-1 text-sm text-amber-300/80">
+                                            Do not modify the downloaded files to ensure proper functionality
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Embed Link Section - Enhanced */}
+                            <div className="mb-6 space-y-3">
+                                <div className="flex items-center gap-2 text-white">
+                                    <Link2 className="w-5 h-5" />
+                                    <h3 className="text-lg font-semibold">README Embed Code</h3>
+                                </div>
+                                <p className="text-sm text-gray-400">
+                                    Copy and paste this into your GitHub README.md file
+                                </p>
+                                <div className="relative">
+                                    <Input
+                                        value={`[![OpenReadme](${imageLink})](${typeof window !== 'undefined' ? window.location.origin : ''})`}
+                                        readOnly
+                                        className="pr-16 font-mono text-sm text-white bg-gray-800 border-gray-600"
+                                    />
+                                    <Button
+                                        onClick={copyToClipboard}
+                                        className="absolute h-8 px-3 bg-teal-600 top-1 right-1 hover:bg-teal-700"
+                                    >
+                                        <Clipboard className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Download Section - Enhanced */}
+                            <div className="mb-6">
+                                <Button
+                                    onClick={handleDownload}
+                                    className="w-full py-6 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl"
+                                >
+                                    <Download className="w-5 h-5 mr-2" />
+                                    Download Setup Files
+                                </Button>
+                            </div>
+
+                            {/* Files Preview - Enhanced */}
+                            <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2">
+                                <div className="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 group hover:bg-gray-750 rounded-xl hover:border-gray-600">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-blue-500/20">
+                                                <Code2 className="w-5 h-5 text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-white">get-openreadme.ts</p>
+                                                <p className="text-xs text-gray-400">TypeScript automation script</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 group hover:bg-gray-750 rounded-xl hover:border-gray-600">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-red-500/20">
+                                                <FileText className="w-5 h-5 text-red-400" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-white">update-openreadme.yml</p>
+                                                <p className="text-xs text-gray-400">GitHub Actions workflow</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Actions - Enhanced */}
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                                <Link
+                                    href="/guide"
+                                    className="inline-flex items-center gap-2 text-sm text-teal-400 transition-colors hover:text-teal-300"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Setup Guide
+                                </Link>
+
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-gray-400 hover:text-white"
+                                >
+                                    Close
+                                </Button>
+                            </div>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            )}
         </div>
     );
 };
 
-export default BentoClassic;
+export default OpenReadmeGrid;
