@@ -25,6 +25,7 @@ async function generateProfileImage(username, userId) {
     const userData = await userResponse.json();
     
     // Prepare the data for the OpenReadme API
+    // Build the API URL with all parameters
     const params = new URLSearchParams({
       n: userData.name || username,
       i: userData.avatar_url || '',
@@ -35,18 +36,19 @@ async function generateProfileImage(username, userId) {
       t: 'classic'  // Default theme
     });
     
-    const apiUrl = `${API_URL}?n=${encodeURIComponent(userData.name || username)}` +
-      `&i=${encodeURIComponent(userData.avatar_url || '')}` +
-      `&g=${encodeURIComponent(username)}` +
-      `&x=${encodeURIComponent(userData.twitter_username || '')}` +
-      `&l=` +  // LinkedIn would need to be handled separately
-      `&p=${encodeURIComponent(userData.blog || userData.html_url)}` +
-      '&t=classic';
+    const apiUrl = `${API_URL}?${params.toString()}`;
+    console.log(`Calling API: ${apiUrl}`);
     
-    console.log(`API URL: ${apiUrl}`);  // Debug log
+    // Call the OpenReadme API with proper headers
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
     
-    // Call the OpenReadme API with GET method
-    const response = await fetch(apiUrl);
+    console.log(`Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const error = await response.text();
