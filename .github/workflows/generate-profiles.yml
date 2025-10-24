@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate profile images
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_TOKEN: ${{ secrets.IMAGE_TOKEN }}
         run: |
           # Install required dependencies
           npm install node-fetch@2
@@ -50,26 +50,26 @@ jobs:
 
           // Get the API URL from environment variables
           const API_URL = process.env.API_URL || 'http://localhost:3000';
-          const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+          const IMAGE_TOKEN = process.env.IMAGE_TOKEN;
 
           async function generateProfileImage(username, userId) {
             try {
               console.log(`Generating image for ${username}...`);
-              
+
               // First, get the user data from GitHub API
               const userResponse = await fetch(`https://api.github.com/users/${username}`, {
                 headers: {
-                  'Authorization': `token ${GITHUB_TOKEN}`,
+                  'Authorization': `token ${IMAGE_TOKEN}`,
                   'Accept': 'application/vnd.github.v3+json'
                 }
               });
-              
+
               if (!userResponse.ok) {
                 throw new Error(`GitHub API error: ${userResponse.statusText}`);
               }
-              
+
               const userData = await userResponse.json();
-              
+
               // Prepare the data for the OpenReadme API
               // Build the API URL with all parameters
               const params = new URLSearchParams({
@@ -81,10 +81,10 @@ jobs:
                 p: userData.blog || userData.html_url,
                 t: 'classic'  // Default theme
               });
-              
+
               const apiUrl = `${API_URL}?${params.toString()}`;
               console.log(`Calling API: ${apiUrl}`);
-              
+
               // Call the OpenReadme API with proper headers
               const response = await fetch(apiUrl, {
                 method: 'GET',
@@ -93,7 +93,7 @@ jobs:
                   'Content-Type': 'application/json'
                 }
               });
-              
+
               console.log(`Response status: ${response.status} ${response.statusText}`);
 
               if (!response.ok) {
@@ -103,9 +103,9 @@ jobs:
 
               const result = await response.json();
               console.log(`✅ Successfully generated image for ${username}: ${result.url}`);
-              
+
               return result.url;
-              
+
             } catch (error) {
               console.error(`❌ Error generating image for ${username}:`, error.message);
               return null;
@@ -116,30 +116,30 @@ jobs:
           (async () => {
             const mappings = process.env.MAPPINGS.split(' ');
             console.log(`Found ${mappings.length} users to process`);
-            
+
             for (const mapping of mappings) {
               if (!mapping) continue;
-              
+
               const [username, userId] = mapping.split('=');
               if (!username || !userId) continue;
-              
+
               console.log(`\n--- Processing ${username} (${userId}) ---`);
-              
+
               try {
                 const imageUrl = await generateProfileImage(username, userId);
                 if (imageUrl) {
                   // Here you could update the user-mapping.json with the new image URL if needed
                   console.log(`Image URL: ${imageUrl}`);
                 }
-                
+
                 // Add delay to avoid rate limiting (1 second between requests)
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
+
               } catch (error) {
                 console.error(`Error processing ${username}:`, error);
               }
             }
-            
+
             console.log('\n--- All users processed ---');
           })();
           EOL
@@ -147,13 +147,13 @@ jobs:
           # Run the generation script
           MAPPINGS="${{ steps.user-mappings.outputs.mappings }}" \
           API_URL="https://openreadme.vercel.app/api/openreadme" \
-          GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
+          IMAGE_TOKEN="${{ secrets.IMAGE_TOKEN }}" \
           node generate-images.js
 
       - name: Commit and push changes
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_TOKEN: ${{ secrets.IMAGE_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
@@ -161,4 +161,4 @@ jobs:
           git add .
           git diff --quiet && git diff --staged --quiet || \
             (git commit -m "chore: update profile images [skip ci]" && \
-             git push https://${{ github.actor }}:$GITHUB_TOKEN@github.com/${{ github.repository }}.git HEAD:main)
+             git push https://${{ github.actor }}:$IMAGE_TOKEN@github.com/${{ github.repository }}.git HEAD:main)
