@@ -29,7 +29,7 @@ async function generateProfileImage(username, userId) {
     const params = new URLSearchParams({
       n: userData.name || username,
       i: userData.avatar_url || '',
-      g: username,
+      github: username,
       x: userData.twitter_username || '',
       l: '',  // LinkedIn would need to be handled separately
       p: userData.blog || userData.html_url,
