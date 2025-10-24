@@ -1,12 +1,10 @@
 name: Generate Profile Images
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths:
-      - 'user-mapping.json'
-      - '.github/workflows/generate-profiles.yml'
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    # Run at 00:00 UTC every day
+    - cron: '0 0 * * *'
 
 permissions:
   contents: write  # Required for pushing changes
@@ -75,7 +73,7 @@ jobs:
               const params = new URLSearchParams({
                 n: userData.name || username,
                 i: userData.avatar_url || '',
-                g: username,
+                github: username,
                 x: userData.twitter_username || '',
                 l: '',  // LinkedIn would need to be handled separately
                 p: userData.blog || userData.html_url,
