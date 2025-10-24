@@ -1,9 +1,16 @@
 name: Generate Profile Images
 
 on:
-  schedule:
-    - cron: "0 0 * * *"  # Run daily at midnight
-  workflow_dispatch:     # Allow manual triggering
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'user-mapping.json'
+      - '.github/workflows/generate-profiles.yml'
+
+permissions:
+  contents: write  # Required for pushing changes
+  pull-requests: write  # Required for creating pull requests
 
 jobs:
   generate-images:
@@ -74,14 +81,18 @@ jobs:
                 t: 'classic'  // Default theme
               });
               
-              const apiUrl = `${API_URL}/api/openreadme?${params.toString()}`;
+              const apiUrl = `${API_URL}?n=${encodeURIComponent(userData.name || username)}` +
+                `&i=${encodeURIComponent(userData.avatar_url || '')}` +
+                `&g=${encodeURIComponent(username)}` +
+                `&x=${encodeURIComponent(userData.twitter_username || '')}` +
+                `&l=` +  // LinkedIn would need to be handled separately
+                `&p=${encodeURIComponent(userData.blog || userData.html_url)}` +
+                '&t=classic';
               
-              // Call the OpenReadme API
-              const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ github: username })
-              });
+              console.log(`API URL: ${apiUrl}`);  // Debug log
+              
+              // Call the OpenReadme API with GET method
+              const response = await fetch(apiUrl);
 
               if (!response.ok) {
                 const error = await response.text();
@@ -133,7 +144,7 @@ jobs:
 
           # Run the generation script
           MAPPINGS="${{ steps.user-mappings.outputs.mappings }}" \
-          API_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" \
+          API_URL="http://localhost:3000/api/openreadme" \
           GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
           node generate-images.js
 
@@ -144,7 +155,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
-          git remote set-url origin https://x-access-token:$GITHUB_TOKEN@github.com/${{ github.repository }}.git
+          git config --global --add safe.directory /github/workspace
           git add .
           git diff --quiet && git diff --staged --quiet || \
-            (git commit -m "chore: update profile images [skip ci]" && git push)
+            (git commit -m "chore: update profile images [skip ci]" && \
+             git push https://${{ github.actor }}:$GITHUB_TOKEN@github.com/${{ github.repository }}.git HEAD:main)
