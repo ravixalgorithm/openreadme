@@ -83,6 +83,7 @@ export default function DashboardPage() {
               streak={streak}
               graph={graph}
               portfolioUrl={portfolioURL}
+              theme={theme}
             />
           </div>
         </div>
