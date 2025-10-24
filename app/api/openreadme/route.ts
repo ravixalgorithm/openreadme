@@ -32,6 +32,15 @@ async function generateSecureFileName(username: string): Promise<string> {
 // Function to log usage statistics (best-effort, non-blocking)
 async function logUserGeneration(username: string, githubToken: string): Promise<void> {
     try {
+        const repoOwner = process.env.GITHUB_REPOSITORY_OWNER || 'Open-Dev-Society';
+        const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'openreadme';
+
+        if (!githubToken) {
+            console.warn('No GitHub token provided, skipping stats logging');
+            return;
+        }
+
+        const octokit = new Octokit({ auth: githubToken });
         const statsFile = 'stats/usage-log.json';
 
         // Get existing stats
@@ -153,7 +162,7 @@ async function uploadToGitHubSafely(
         const rawUrl = data.content.html_url
             .replace('https://github.com/', 'https://raw.githubusercontent.com/')
             .replace('/blob/', '/');
-            
+
         // Add version to URL to prevent caching issues
         return version ? `${rawUrl}?v=${version}` : rawUrl;
 
