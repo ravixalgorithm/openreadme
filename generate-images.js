@@ -2,18 +2,19 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const { execSync } = require('child_process');
 
-// Get the API URL from environment variables
 const API_URL = process.env.API_URL || 'http://localhost:3000';
-const IMAGE_TOKEN = process.env.IMAGE_TOKEN;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const REPO_OWNER = 'Open-Dev-Society';
+const REPO_NAME = 'openreadme';
 
 async function generateProfileImage(username, userId) {
   try {
     console.log(`Generating image for ${username}...`);
 
-    // First, get the user data from GitHub API
+    // Get user data from GitHub API
     const userResponse = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
-        'Authorization': `token ${IMAGE_TOKEN}`,
+        'Authorization': `token ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -24,27 +25,28 @@ async function generateProfileImage(username, userId) {
 
     const userData = await userResponse.json();
 
-    // Prepare the data for the OpenReadme API
-    // Build the API URL with all parameters
+    // Build API URL with repository parameters
     const params = new URLSearchParams({
       n: userData.name || username,
       i: userData.avatar_url || '',
       github: username,
       x: userData.twitter_username || '',
-      l: '',  // LinkedIn would need to be handled separately
-      p: userData.blog || userData.html_url,
-      t: 'classic'  // Default theme
+      l: userData.blog || userData.html_url,
+      p: userData.html_url,
+      t: 'classic',
+      repo: `${REPO_OWNER}/${REPO_NAME}`,
+      path: 'stats/usage-log.json'
     });
 
     const apiUrl = `${API_URL}?${params.toString()}`;
     console.log(`Calling API: ${apiUrl}`);
 
-    // Call the OpenReadme API with proper headers
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `token ${GITHUB_TOKEN}`
       }
     });
 
@@ -57,7 +59,6 @@ async function generateProfileImage(username, userId) {
 
     const result = await response.json();
     console.log(`✅ Successfully generated image for ${username}: ${result.url}`);
-
     return result.url;
 
   } catch (error) {
@@ -73,7 +74,6 @@ async function generateProfileImage(username, userId) {
 
   for (const mapping of mappings) {
     if (!mapping) continue;
-
     const [username, userId] = mapping.split('=');
     if (!username || !userId) continue;
 
@@ -82,17 +82,12 @@ async function generateProfileImage(username, userId) {
     try {
       const imageUrl = await generateProfileImage(username, userId);
       if (imageUrl) {
-        // Here you could update the user-mapping.json with the new image URL if needed
         console.log(`Image URL: ${imageUrl}`);
       }
-
-      // Add delay to avoid rate limiting (1 second between requests)
       await new Promise(resolve => setTimeout(resolve, 1000));
-
     } catch (error) {
       console.error(`Error processing ${username}:`, error);
     }
   }
-
   console.log('\n--- All users processed ---');
 })();
