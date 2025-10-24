@@ -1,6 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-/*bento1.tsx*/
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
@@ -33,6 +32,8 @@ import {
     Code2,
     GitCommit,
     Sparkles,
+    User as UserIcon,
+    Zap
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -41,28 +42,17 @@ import { generateContributionGraph } from "@/utils/generate-graph";
 import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
-import { generateRandomString } from "@/utils/calculations";
 import { TextShimmer } from "../ui/text-shimmer";
-import { User, Zap } from "lucide-react";
 
-const randomId = generateRandomString(5);
+// Import React explicitly
+import * as React from 'react';
 
 const space = Space_Grotesk({
     subsets: ["latin"],
     weight: ["400", "300", "600", "700", "500"],
 });
 
-const OpenReadmeGrid = ({
-    name,
-    githubURL,
-    twitterURL,
-    linkedinURL,
-    imageUrl,
-    stats,
-    streak,
-    graph,
-    portfolioUrl,
-}: {
+interface OpenReadmeGridProps {
     name: string;
     githubURL: string;
     twitterURL: string;
@@ -72,6 +62,20 @@ const OpenReadmeGrid = ({
     streak: StreakStats | undefined;
     graph: Graph[] | undefined;
     portfolioUrl: string;
+    theme: string; // Theme is now part of the props
+}
+
+const OpenReadmeGrid: React.FC<OpenReadmeGridProps> = ({
+    name,
+    githubURL,
+    twitterURL,
+    linkedinURL,
+    imageUrl,
+    stats,
+    streak,
+    graph,
+    portfolioUrl,
+    theme
 }) => {
     const [imageLink, setImageLink] = useState<string>("");
     const [loading, setLoading] = useState(false);
@@ -119,10 +123,8 @@ const OpenReadmeGrid = ({
             )}&g=${encodeURIComponent(githubURL)}&x=${encodeURIComponent(
                 twitterURL,
             )}&l=${encodeURIComponent(linkedinURL)}&i=${encodeURIComponent(
-                imageUrl,
-            )}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(
-                randomId,
-            )}`;
+                imageUrl || ''
+            )}&p=${encodeURIComponent(portfolioUrl || '')}`;
 
             fileContent = `const apiUrl = "${apiUrl}";\n` + fileContent;
 
@@ -143,23 +145,25 @@ const OpenReadmeGrid = ({
     };
 
     const handleGenerateLink = async () => {
-    if (isGenerated) {
-        setIsOpen(true);
-        return;
-    }
-    setLoading(true);
-    setIsGenerated(false);
+        if (isGenerated) {
+            setIsOpen(true);
+            return;
+        }
+        setLoading(true);
+        setIsGenerated(false);
 
-    // Ensure name is not empty
-    const displayName = name || githubURL || "Developer";
+        // Build the API URL with all parameters
+        const params = new URLSearchParams({
+            n: name || '',
+            i: imageUrl || '',
+            g: githubURL || '',
+            x: twitterURL || '',
+            l: linkedinURL || '',
+            p: portfolioUrl || '',
+            t: theme
+        });
 
-    const apiURL = `/api/openreadme?n=${encodeURIComponent(
-        displayName,
-    )}&i=${encodeURIComponent(imageUrl)}&g=${encodeURIComponent(
-        githubURL,
-    )}&x=${encodeURIComponent(twitterURL)}&l=${encodeURIComponent(
-        linkedinURL,
-    )}&p=${encodeURIComponent(portfolioUrl)}&z=${encodeURIComponent(randomId)}`;
+    const apiURL = `/api/openreadme?${params.toString()}`;
 
     try {
         const res = await fetch(apiURL, {
@@ -252,7 +256,7 @@ const OpenReadmeGrid = ({
                         ) : (
                             <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-700 dark:to-gray-800">
                                 <div className="text-center text-gray-600 dark:text-gray-300">
-                                    <User className="w-20 h-20 mx-auto mb-4" />
+                                    <UserIcon className="w-20 h-20 mx-auto mb-4" />
                                     <p className="text-lg font-medium">Add your profile image</p>
                                     <p className="mt-2 text-sm opacity-75">Upload an image URL in the form above</p>
                                 </div>
@@ -613,17 +617,34 @@ const OpenReadmeGrid = ({
                             {/* Files Preview - Enhanced */}
                             {/* <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2">
                                 <div className="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 group hover:bg-gray-750 rounded-xl hover:border-gray-600">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-blue-500/20">
-                                                <Code2 className="w-5 h-5 text-blue-400" />
+                                    <div className="flex flex-col gap-6 w-full">
+                                        <div className="flex flex-col gap-2 w-full">
+                                            <div className="flex items-center gap-2">
+                                                <UserIcon className="w-4 h-4 text-foreground/70" />
+                                                <p className="text-foreground/70 text-sm">Name</p>
                                             </div>
-                                            <div>
-                                                <p className="font-medium text-white">get-openreadme.ts</p>
-                                                <p className="text-xs text-gray-400">TypeScript automation script</p>
-                                            </div>
+                                            <Input
+                                                value={name}
+                                                onChange={(e) => {
+                                                    // Handle name change if needed
+                                                }}
+                                                placeholder="Enter your name"
+                                                className="w-full"
+                                                readOnly
+                                            />
                                         </div>
-                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-blue-500/20">
+                                                    <Code2 className="w-5 h-5 text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-white">get-openreadme.ts</p>
+                                                    <p className="text-xs text-gray-400">TypeScript automation script</p>
+                                                </div>
+                                            </div>
+                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        </div>
                                     </div>
                                 </div>
 

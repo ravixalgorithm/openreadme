@@ -6,6 +6,8 @@ import { generateContributionGraph } from "@/utils/generate-graph";
 import { fetchYearContributions } from "@/actions/fetchYearContribution";
 import { rateLimit } from "@/lib/rate-limit";
 import crypto from 'crypto';
+import { getHashedUsername, storeUserMapping } from '@/utils/userMapping';
+import { Octokit } from '@octokit/rest';
 
 export const maxDuration = 45;
 
@@ -14,11 +16,17 @@ function hashUsername(username: string): string {
     return crypto.createHash('sha256').update(username.toLowerCase()).digest('hex').substring(0, 12);
 }
 
-function generateSecureFileName(username: string, uniqueId: string): string {
-    const hashedUsername = hashUsername(username);
-    const timestamp = Date.now();
-    const randomSuffix = crypto.createHash('md5').update(`${uniqueId}-${timestamp}`).digest('hex').substring(0, 8);
-    return `profiles/${hashedUsername}-${randomSuffix}.png`;
+async function generateSecureFileName(username: string): Promise<string> {
+    // Check if we already have a mapping for this username
+    const existingHash = await getHashedUsername(username);
+    if (existingHash) {
+        return `profiles/${existingHash}.png`;
+    }
+
+    // Create new hash if no mapping exists
+    const hashed = hashUsername(username);
+    await storeUserMapping(username, hashed);
+    return `profiles/${hashed}.png`;
 }
 
 // Function to log usage statistics (best-effort, non-blocking)
@@ -101,93 +109,58 @@ async function uploadToGitHubSafely(
     imageBuffer: Buffer,
     githubToken: string,
     username: string,
-    uniqueId: string
+    version?: string
 ): Promise<string> {
-    const fileName = generateSecureFileName(username, uniqueId);
-    const base64Image = imageBuffer.toString('base64');
-
-    // Validate image size (max 2MB)
-    if (imageBuffer.length > 2 * 1024 * 1024) {
-        throw new Error('Image too large (max 2MB)');
-    }
-
-    console.log(`📊 Logging usage for ${username}...`);
-    await logUserGeneration(username, githubToken);
-
-    // Clean up old files for this user
     try {
-        const hashedUsername = hashUsername(username);
-        const existingFilesResponse = await fetch(
-            `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/profiles`,
-            {
-                headers: {
-                    'Authorization': `token ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                },
-            }
-        );
+        // Generate secure filename based on username
+        const fileName = await generateSecureFileName(username);
+        const base64Image = imageBuffer.toString('base64');
 
-        if (existingFilesResponse.ok) {
-            const files = await existingFilesResponse.json();
-            const userFiles = files.filter((file: any) =>
-                file.name.startsWith(`${hashedUsername}-`) && file.name.endsWith('.png')
-            );
+        console.log(`Uploading to: ${fileName}`);
 
-            // Delete old files for this user (keep repo clean)
-            for (const file of userFiles) {
+        // Initialize Octokit
+        const octokit = new Octokit({ auth: githubToken });
+
+        // Always update the file, even if it exists
+        const { data } = await octokit.repos.createOrUpdateFileContents({
+            owner: 'ravixalgorithm',
+            repo: 'openreadme-images',
+            path: fileName,
+            message: `Update profile image for ${username}${version ? ` (v${version})` : ''}`,
+            content: base64Image,
+            // Get the current SHA to ensure we're updating the right file
+            ...(await (async () => {
                 try {
-                    await fetch(
-                        `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${file.path}`,
-                        {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `token ${githubToken}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                            },
-                            body: JSON.stringify({
-                                message: `🧹 Cleanup: Replace old image for user`,
-                                sha: file.sha,
-                            }),
-                        }
-                    );
-                    console.log(`🗑️ Deleted old file: ${file.name}`);
-                } catch (deleteError) {
-                    console.log(`⚠️ Could not delete old file ${file.path}`, deleteError);
+                    const { data } = await octokit.repos.getContent({
+                        owner: 'ravixalgorithm',
+                        repo: 'openreadme-images',
+                        path: fileName,
+                    });
+                    return { sha: Array.isArray(data) ? data[0].sha : (data as any).sha };
+                } catch (error) {
+                    console.log('Creating new file');
+                    return {};
                 }
-            }
+            })()),
+        });
+
+        // Ensure we have the content URL
+        if (!data.content || !data.content.html_url) {
+            throw new Error('Failed to get content URL from GitHub response');
         }
-    } catch (cleanupError) {
-        console.log('🧹 Cleanup failed (non-critical):', cleanupError);
+
+        // Return the raw content URL with cache busting
+        const rawUrl = data.content.html_url
+            .replace('https://github.com/', 'https://raw.githubusercontent.com/')
+            .replace('/blob/', '/');
+            
+        // Add version to URL to prevent caching issues
+        return version ? `${rawUrl}?v=${version}` : rawUrl;
+
+    } catch (error) {
+        console.error('Error in uploadToGitHubSafely:', error);
+        throw error;
     }
-
-    // Upload new file
-    console.log(`📤 Uploading new image: ${fileName}`);
-    const uploadResponse = await fetch(
-        `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${fileName}`,
-        {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${githubToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: `✨ Add profile image for user ${new Date().toISOString()}`,
-                content: base64Image,
-                branch: 'main'
-            }),
-        }
-    );
-
-    if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json().catch(() => ({}));
-        throw new Error(`GitHub upload failed: ${errorData.message || uploadResponse.statusText}`);
-    }
-
-    // Return the raw GitHub URL
-    const githubUrl = `https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/${fileName}`;
-    console.log(`✅ Successfully uploaded to: ${githubUrl}`);
-    return githubUrl;
 }
 
 const isValidGitHubUsername = (u: string) =>
@@ -609,9 +582,12 @@ export async function POST(req: NextRequest) {
     const screenshot = await page.screenshot({ type: "png", fullPage: true }) as Buffer;
     await browser.close();
 
+    // Get version from query params if provided
+    const version = req.nextUrl.searchParams.get('v') || undefined;
+
     // Upload to GitHub
     try {
-        const imageUrl = await uploadToGitHubSafely(screenshot, process.env.GITHUB_TOKEN, g, uniqueId);
+        const imageUrl = await uploadToGitHubSafely(screenshot, process.env.GITHUB_TOKEN, username, version);
         return new NextResponse(JSON.stringify({
             url: imageUrl,
             method: "github",
