@@ -12,6 +12,7 @@ export type ThemeComponentProps = {
   streak: StreakStats | undefined;
   graph: Graph[] | undefined;
   portfolioUrl: string;
+  theme: string; // Add the theme prop to match OpenReadmeGridProps
 };
 
 export type ThemeId = 'bento1';
