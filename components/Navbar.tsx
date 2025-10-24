@@ -57,7 +57,7 @@ export default function Navbar() {
                         About
                     </Link>
                     <Link
-                        href="https://github.com/ravixalgorithm/openreadme"
+                        href="https://github.com/open-dev-society/openreadme"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 font-semibold transition-all duration-300 group hover:underline hover:text-primary lg:text-lg"

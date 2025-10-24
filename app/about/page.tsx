@@ -47,7 +47,7 @@ export default function AboutPage() {
                                         </Link>
                                     </Button>
                                     <Button asChild variant="outline" size="lg" className="font-medium">
-                                        <a href="https://github.com/ravixalgorithm/openreadme" target="_blank" rel="noreferrer">
+                                        <a href="https://github.com/open-dev-society/openreadme" target="_blank" rel="noreferrer">
                                             <Github className="mr-2 size-5" />
                                             GitHub
                                         </a>
@@ -85,12 +85,12 @@ export default function AboutPage() {
                                 </div>
                                 <div className="flex flex-wrap gap-4">
                                     <Button asChild variant="outline" size="lg" className="font-medium">
-                                        <Link href="/">
+                                        <Link href="https://github.com/open-dev-society/" target="_blank" rel="noreferrer">
                                             Visit Website
                                         </Link>
                                     </Button>
                                     <Button asChild size="lg" className="font-medium">
-                                        <a href="https://github.com/ravixalgorithm/openreadme" target="_blank" rel="noreferrer">
+                                        <a href="https://github.com/open-dev-society/openreadme" target="_blank" rel="noreferrer">
                                             <Github className="mr-2 size-5" />
                                             Project Repo
                                         </a>

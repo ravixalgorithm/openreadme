@@ -299,7 +299,7 @@ const Odsbranding: React.FC = () => {
     return (
         <div className="flex justify-center">
             <a
-                href="https://github.com/ravixalgorithm/openreadme"
+                href="https://github.com/open-dev-society"
                 target="_blank"
                 className="relative text-3xl inline-block w-64 h-[1.2em] mx-auto group dark:bg-black bg-white dark:border-white border-black border-2 rounded-lg"
             >
