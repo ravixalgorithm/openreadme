@@ -10,6 +10,7 @@ permissions:
   contents: write  # Required for pushing changes
   pull-requests: write  # Required for creating pull requests
   packages: read  # Required for reading package information
+  actions: read
 
 jobs:
   generate-images:
@@ -39,7 +40,9 @@ jobs:
 
       - name: Generate profile images
         env:
-          IMAGE_TOKEN: ${{ secrets.IMAGE_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || secrets.IMAGE_TOKEN }}
         run: |
           # Install required dependencies
           npm install node-fetch@2
@@ -52,7 +55,7 @@ jobs:
 
           // Get the API URL from environment variables
           const API_URL = process.env.API_URL || 'http://localhost:3000';
-          const IMAGE_TOKEN = process.env.IMAGE_TOKEN;
+          const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
           async function generateProfileImage(username, userId) {
             try {
@@ -61,7 +64,7 @@ jobs:
               // First, get the user data from GitHub API
               const userResponse = await fetch(`https://api.github.com/users/${username}`, {
                 headers: {
-                  'Authorization': `token ${IMAGE_TOKEN}`,
+                  'Authorization': `token ${GITHUB_TOKEN}`,
                   'Accept': 'application/vnd.github.v3+json'
                 }
               });
@@ -73,14 +76,13 @@ jobs:
               const userData = await userResponse.json();
 
               // Prepare the data for the OpenReadme API
-              // Build the API URL with all parameters
               const params = new URLSearchParams({
                 n: userData.name || username,
                 i: userData.avatar_url || '',
                 github: username,
                 x: userData.twitter_username || '',
-                l: '',  // LinkedIn would need to be handled separately
-                p: userData.blog || userData.html_url,
+                l: userData.blog || userData.html_url,
+                p: userData.html_url,
                 t: 'classic'  // Default theme
               });
 
@@ -149,7 +151,6 @@ jobs:
           # Run the generation script
           MAPPINGS="${{ steps.user-mappings.outputs.mappings }}" \
           API_URL="https://openreadme.vercel.app/api/openreadme" \
-          IMAGE_TOKEN="${{ secrets.IMAGE_TOKEN }}" \
           node generate-images.js
 
       - name: Pull latest changes
@@ -157,7 +158,7 @@ jobs:
       - name: Commit and push changes
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
         env:
-          IMAGE_TOKEN: ${{ secrets.IMAGE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || secrets.IMAGE_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
@@ -165,4 +166,4 @@ jobs:
           git add .
           git diff --quiet && git diff --staged --quiet || \
             (git commit -m "chore: update profile images [skip ci]" && \
-             git push https://${{ github.actor }}:$IMAGE_TOKEN@github.com/${{ github.repository }}.git HEAD:main)
+             git push https://${{ github.actor }}:$GITHUB_TOKEN@github.com/${{ github.repository }}.git HEAD:main)
