@@ -214,6 +214,7 @@ jobs:
         run: |
           git add .
           if ! git diff-index --quiet HEAD --; then
-            git commit -m "chore: update profile images [skip ci]" && \
+            git commit -m "chore: update profile images [skip ci]"
+            git pull origin main --rebase || true
             git push https://${{ github.actor }}:$GITHUB_TOKEN@github.com/${{ github.repository }}.git HEAD:main
           fi
