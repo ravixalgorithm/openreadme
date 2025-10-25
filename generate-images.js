@@ -3,9 +3,13 @@ const fetch = require('node-fetch');
 const { execSync } = require('child_process');
 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
+<<<<<<< HEAD
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.IMAGE_TOKEN;
+=======
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO_OWNER = 'Open-Dev-Society';
 const REPO_NAME = 'openreadme';
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
 
 async function generateProfileImage(username, userId) {
   try {
@@ -20,22 +24,33 @@ async function generateProfileImage(username, userId) {
     });
 
     if (!userResponse.ok) {
-      throw new Error(`GitHub API error: ${userResponse.statusText}`);
+      const error = await userResponse.text();
+      throw new Error(`GitHub API error: ${userResponse.status} ${error}`);
     }
 
     const userData = await userResponse.json();
 
+<<<<<<< HEAD
+    // Prepare the data for the OpenReadme API
+=======
     // Build API URL with repository parameters
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
     const params = new URLSearchParams({
       n: userData.name || username,
       i: userData.avatar_url || '',
       github: username,
       x: userData.twitter_username || '',
+<<<<<<< HEAD
+      l: userData.blog || userData.html_url || '',
+      p: userData.html_url || '',
+      t: 'classic'
+=======
       l: userData.blog || userData.html_url,
       p: userData.html_url,
       t: 'classic',
       repo: `${REPO_OWNER}/${REPO_NAME}`,
       path: 'stats/usage-log.json'
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
     });
 
     const apiUrl = `${API_URL}?${params.toString()}`;
@@ -69,7 +84,7 @@ async function generateProfileImage(username, userId) {
 
 // Process all users
 (async () => {
-  const mappings = process.env.MAPPINGS.split(' ');
+  const mappings = process.env.MAPPINGS ? process.env.MAPPINGS.split(' ') : [];
   console.log(`Found ${mappings.length} users to process`);
 
   for (const mapping of mappings) {

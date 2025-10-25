@@ -6,7 +6,6 @@ import { generateContributionGraph } from "@/utils/generate-graph";
 import { fetchYearContributions } from "@/actions/fetchYearContribution";
 import { rateLimit } from "@/lib/rate-limit";
 import crypto from 'crypto';
-import { getHashedUsername, storeUserMapping } from '@/utils/userMapping';
 import { Octokit } from '@octokit/rest';
 
 export const maxDuration = 45;
@@ -16,57 +15,159 @@ function hashUsername(username: string): string {
     return crypto.createHash('sha256').update(username.toLowerCase()).digest('hex').substring(0, 12);
 }
 
+// Store user mapping in GitHub repository
+async function storeUserMapping(username: string, hashedName: string): Promise<void> {
+    try {
+        const githubToken = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_IMAGES;
+        if (!githubToken) {
+            throw new Error('GitHub token not configured');
+        }
+
+        const octokit = new Octokit({ auth: githubToken });
+        const repoOwner = 'ravixalgorithm';
+        const repoName = 'openreadme-images';
+        const mappingFile = 'mappings/user-mappings.json';
+
+        console.log(`📝 Storing user mapping for ${username} in ${repoOwner}/${repoName}:${mappingFile}`);
+
+        // Get existing mappings
+        let existingMappings: Record<string, string> = {};
+        let currentSha = '';
+
+        try {
+            const { data } = await octokit.repos.getContent({
+                owner: repoOwner,
+                repo: repoName,
+                path: mappingFile,
+            });
+
+            if (!Array.isArray(data) && 'content' in data) {
+                currentSha = data.sha;
+                const content = Buffer.from(data.content, 'base64').toString();
+                existingMappings = JSON.parse(content);
+            }
+        } catch (error) {
+            // File doesn't exist, start with empty mappings
+            console.log('Creating new mappings file');
+        }
+
+        // Add new mapping
+        existingMappings[username.toLowerCase()] = hashedName;
+
+        // Update the file
+        await octokit.repos.createOrUpdateFileContents({
+            owner: repoOwner,
+            repo: repoName,
+            path: mappingFile,
+            message: `Add mapping for ${username}`,
+            content: Buffer.from(JSON.stringify(existingMappings, null, 2)).toString('base64'),
+            sha: currentSha || undefined
+        });
+
+        console.log(`✅ Stored mapping: ${username} -> ${hashedName}`);
+    } catch (error) {
+        console.error('❌ Failed to store user mapping:', error);
+        throw error;
+    }
+}
+
+// Get existing hashed username
+async function getHashedUsername(username: string): Promise<string | null> {
+    try {
+        const githubToken = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_IMAGES;
+        if (!githubToken) {
+            return null;
+        }
+
+        const octokit = new Octokit({ auth: githubToken });
+        const repoOwner = 'ravixalgorithm';
+        const repoName = 'openreadme-images';
+        const mappingFile = 'mappings/user-mappings.json';
+
+        const { data } = await octokit.repos.getContent({
+            owner: repoOwner,
+            repo: repoName,
+            path: mappingFile,
+        });
+
+        if (!Array.isArray(data) && 'content' in data) {
+            const content = Buffer.from(data.content, 'base64').toString();
+            const mappings = JSON.parse(content);
+            return mappings[username.toLowerCase()] || null;
+        }
+
+        return null;
+    } catch (error) {
+        // File doesn't exist or other error
+        return null;
+    }
+}
+
 async function generateSecureFileName(username: string): Promise<string> {
-    // Check if we already have a mapping for this username
     const existingHash = await getHashedUsername(username);
     if (existingHash) {
+        console.log(`✅ Found existing mapping for ${username} -> ${existingHash}`);
         return `profiles/${existingHash}.png`;
     }
-
-    // Create new hash if no mapping exists
     const hashed = hashUsername(username);
-    await storeUserMapping(username, hashed);
+    try {
+        await storeUserMapping(username, hashed);
+        console.log(`✅ Created new mapping for ${username} -> ${hashed}`);
+    } catch (error) {
+        console.error(`❌ Failed to store mapping for ${username}:`, error);
+        throw new Error(`Failed to create user mapping for ${username}`);
+    }
     return `profiles/${hashed}.png`;
 }
 
-// Function to log usage statistics (best-effort, non-blocking)
+// Function to log usage statistics
 async function logUserGeneration(username: string, githubToken: string): Promise<void> {
     try {
         const repoOwner = process.env.GITHUB_REPOSITORY_OWNER || 'Open-Dev-Society';
         const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'openreadme';
 
         if (!githubToken) {
-            console.warn('No GitHub token provided, skipping stats logging');
+            console.warn('❌ No GitHub token provided, skipping stats logging');
             return;
         }
+
+        console.log(`📊 Logging usage for ${username} to ${repoOwner}/${repoName}`);
 
         const octokit = new Octokit({ auth: githubToken });
         const statsFile = 'stats/usage-log.json';
 
-        // Get existing stats
+        // Try to get existing stats
         let existingStats: any[] = [];
         let currentSha = '';
 
         try {
-            const response = await fetch(
-                `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${statsFile}`,
-                {
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                    },
-                }
-            );
+            const response = await octokit.repos.getContent({
+                owner: repoOwner,
+                repo: repoName,
+                path: statsFile,
+            });
 
-            if (response.ok) {
-                const data = await response.json();
-                existingStats = JSON.parse(Buffer.from(data.content, 'base64').toString());
-                currentSha = data.sha;
+            if (Array.isArray(response.data)) {
+                const file = response.data.find((f: any) => f.name === 'usage-log.json');
+                if (file && file.download_url) {
+                    const content = await (await fetch(file.download_url)).text();
+                    existingStats = JSON.parse(content);
+                    currentSha = file.sha;
+                }
+            } else if ('content' in response.data) {
+                const content = Buffer.from(response.data.content, 'base64').toString();
+                existingStats = JSON.parse(content);
+                currentSha = response.data.sha;
             }
-        } catch (e) {
-            console.log('Stats file does not exist yet, creating new one');
+        } catch (error: any) {
+            if (error.status !== 404) {
+                console.error('Error fetching stats file:', error);
+                return;
+            }
+            console.log('Stats file does not exist, will create a new one');
         }
 
+        // Add new entry
         const newEntry = {
             hashedUsername: hashUsername(username),
             actualUsername: username,
@@ -82,187 +183,161 @@ async function logUserGeneration(username: string, githubToken: string): Promise
         }
 
         // Update stats file
-        const updatedContent = Buffer.from(JSON.stringify(existingStats, null, 2)).toString('base64');
+        const content = Buffer.from(JSON.stringify(existingStats, null, 2)).toString('base64');
 
-        const updatePayload: any = {
-            message: `Update usage stats - ${existingStats.length} total generations`,
-            content: updatedContent,
-            branch: 'main'
-        };
+        await octokit.repos.createOrUpdateFileContents({
+            owner: repoOwner,
+            repo: repoName,
+            path: statsFile,
+            message: `Update usage stats - ${new Date().toISOString()}`,
+            content: content,
+            sha: currentSha || undefined
+        });
 
-        if (currentSha) {
-            updatePayload.sha = currentSha;
-        }
-
-        await fetch(
-            `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${statsFile}`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatePayload),
-            }
-        );
-
-        console.log(`✅ Logged usage for ${username}`);
+        console.log(`✅ Successfully logged usage for ${username} to stats/usage-log.json`);
     } catch (error) {
-        console.log('📊 Stats logging failed (non-critical):', error);
+        console.error('❌ Stats logging failed (non-critical):', error);
+        console.error('This means usage statistics will not be recorded, but image generation continues.');
     }
 }
 
 // Secure GitHub upload function
-async function uploadToGitHubSafely(
-    imageBuffer: Buffer,
-    githubToken: string,
-    username: string,
-    version?: string
-): Promise<string> {
+async function uploadToGitHubSafely(username: string, imageBuffer: Buffer, githubToken: string, version?: number): Promise<string> {
     try {
-        // Generate secure filename based on username
         const fileName = await generateSecureFileName(username);
-        const base64Image = imageBuffer.toString('base64');
-
-        console.log(`Uploading to: ${fileName}`);
-
-        // Initialize Octokit
         const octokit = new Octokit({ auth: githubToken });
+        // Use ravixalgorithm for image storage repository
+        const imageRepoOwner = 'ravixalgorithm';
+        const imageRepoName = 'openreadme-images';
 
-        // Always update the file, even if it exists
-        const { data } = await octokit.repos.createOrUpdateFileContents({
-            owner: 'ravixalgorithm',
-            repo: 'openreadme-images',
-            path: fileName,
-            message: `Update profile image for ${username}${version ? ` (v${version})` : ''}`,
-            content: base64Image,
-            // Get the current SHA to ensure we're updating the right file
-            ...(await (async () => {
-                try {
-                    const { data } = await octokit.repos.getContent({
-                        owner: 'ravixalgorithm',
-                        repo: 'openreadme-images',
-                        path: fileName,
-                    });
-                    return { sha: Array.isArray(data) ? data[0].sha : (data as any).sha };
-                } catch (error) {
-                    console.log('Creating new file');
-                    return {};
-                }
-            })()),
-        });
-
-        // Ensure we have the content URL
-        if (!data.content || !data.content.html_url) {
-            throw new Error('Failed to get content URL from GitHub response');
+        // Try to get the file to get its SHA if it exists
+        let sha: string | undefined;
+        try {
+            const { data } = await octokit.repos.getContent({
+                owner: imageRepoOwner,
+                repo: imageRepoName,
+                path: fileName,
+            });
+            if (!Array.isArray(data) && 'sha' in data) {
+                sha = data.sha;
+            }
+        } catch (error) {
+            // File doesn't exist, which is fine
         }
 
-        // Return the raw content URL with cache busting
-        const rawUrl = data.content.html_url
+        // Upload or update the file
+        const { data } = await octokit.repos.createOrUpdateFileContents({
+            owner: imageRepoOwner,
+            repo: imageRepoName,
+            path: fileName,
+            message: `Update profile image for ${username}${version ? ` (v${version})` : ''}`,
+            content: imageBuffer.toString('base64'),
+            sha: sha
+        });
+
+        // Return the raw content URL
+        if (!data.content || !data.content.html_url) {
+            throw new Error('Failed to get file URL from GitHub response');
+        }
+        return data.content.html_url
             .replace('https://github.com/', 'https://raw.githubusercontent.com/')
             .replace('/blob/', '/');
 
-        // Add version to URL to prevent caching issues
-        return version ? `${rawUrl}?v=${version}` : rawUrl;
-
     } catch (error) {
-        console.error('Error in uploadToGitHubSafely:', error);
+        console.error('Error uploading to GitHub:', error);
         throw error;
     }
 }
 
 const isValidGitHubUsername = (u: string) =>
-  /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(u)
+    /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(u);
 
 function extractUsername(req: NextRequest, body?: any) {
-  const sp = req.nextUrl?.searchParams
-  const u =
-    sp?.get("username") ??
-    sp?.get("userName") ??
-    sp?.get("user") ??
-    sp?.get("u") ??
-    sp?.get("github") ??
-    sp?.get("gh") ??
-    sp?.get("login") ??
-    (body && (body.username ?? body.userName ?? body.user ?? body.u ?? body.github ?? body.gh ?? body.login))
-  return typeof u === "string" ? u.trim() : ""
+    const sp = req.nextUrl?.searchParams;
+    const u = sp?.get("username") ??
+        sp?.get("userName") ??
+        sp?.get("user") ??
+        sp?.get("u") ??
+        sp?.get("github") ??
+        sp?.get("gh") ??
+        sp?.get("login") ??
+        (body && (body.username ?? body.userName ?? body.user ?? body.u ?? body.github ?? body.gh ?? body.login));
+    return typeof u === "string" ? u.trim() : "";
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}))
-    const username = extractUsername(req, body)
-    if (!isValidGitHubUsername(username)) {
-      return NextResponse.json(
-        { error: "Valid GitHub username is required (2-39 characters)" },
-        { status: 400 }
-      )
-    }
+    try {
+        const body = await req.json().catch(() => ({}));
+        const username = extractUsername(req, body);
 
-    // Enhanced rate limiting for public safety
-    const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-    const rateLimitResult = rateLimit(clientIP, {
-        windowMs: 10 * 60 * 1000, // 10 minutes
-        maxRequests: 10 // Increased from 3 to 10 for development
-    });
-
-    if (!rateLimitResult.allowed) {
-        return new NextResponse(
-            JSON.stringify({
-                error: "Rate limit exceeded",
-                message: "Too many requests. Please wait before generating another image.",
-                retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
-            }),
-            {
-                status: 429,
-                headers: { "Content-Type": "application/json" }
-            }
-        );
-    }
-
-    const { searchParams } = new URL(req.url);
-    const n = decodeURIComponent(searchParams.get("n") || "").trim();
-    const g = decodeURIComponent(searchParams.get("g") || username).trim(); // prefer query g or extracted username
-    const i = decodeURIComponent(searchParams.get("i") || "").trim();
-    const x = decodeURIComponent(searchParams.get("x") || "").trim();
-    const l = decodeURIComponent(searchParams.get("l") || "").trim();
-    const p = decodeURIComponent(searchParams.get("p") || "").trim();
-    const uniqueId = decodeURIComponent(searchParams.get("z") || "");
-
-    // Validate image URL if provided
-    if (i && !i.startsWith('https://')) {
-        return new NextResponse(
-            JSON.stringify({ error: "Image URL must use HTTPS" }),
-            { status: 400, headers: { "Content-Type": "application/json" } }
-        );
-    }
-
-    console.log(`[${new Date().toISOString()}] 🎨 Generating image for user: ${g}`);
-
-    // Fetch GitHub data
-    let userStats: any = {};
-    let contributionStats: any = {};
-    let graphSVG = "";
-
-    if (g) {
-        try {
-            const currentYear = new Date().getFullYear();
-            const contributionDays = await fetchYearContributions(g, currentYear);
-            graphSVG = generateContributionGraph(contributionDays);
-            const userData = await fetchUserData(g);
-            userStats = userData.userStats;
-            contributionStats = await fetchContributions(g);
-        } catch (error) {
-            console.error("❌ Error fetching GitHub data:", error);
-            userStats = {};
-            contributionStats = {};
+        if (!isValidGitHubUsername(username)) {
+            return NextResponse.json(
+                { error: "Valid GitHub username is required (2-39 characters)" },
+                { status: 400 }
+            );
         }
-    }
 
-    // Beautiful HTML template matching the bento grid design
-    /* stylelint-disable */
-    const html = `<!DOCTYPE html>
+        // Rate limiting
+        const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+        const rateLimitResult = rateLimit(clientIP, {
+            windowMs: 10 * 60 * 1000, // 10 minutes
+            maxRequests: 10
+        });
+
+        if (!rateLimitResult.allowed) {
+            return new NextResponse(
+                JSON.stringify({
+                    error: "Rate limit exceeded",
+                    message: "Too many requests. Please wait before generating another image.",
+                    retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+                }),
+                {
+                    status: 429,
+                    headers: { "Content-Type": "application/json" }
+                }
+            );
+        }
+
+        const { searchParams } = new URL(req.url);
+        const n = decodeURIComponent(searchParams.get("n") || "").trim();
+        const g = decodeURIComponent(searchParams.get("g") || username).trim();
+        const i = decodeURIComponent(searchParams.get("i") || "").trim();
+        const x = decodeURIComponent(searchParams.get("x") || "").trim();
+        const l = decodeURIComponent(searchParams.get("l") || "").trim();
+        const p = decodeURIComponent(searchParams.get("p") || "").trim();
+
+        // Validate image URL if provided
+        if (i && !i.startsWith('https://')) {
+            return new NextResponse(
+                JSON.stringify({ error: "Image URL must use HTTPS" }),
+                { status: 400, headers: { "Content-Type": "application/json" } }
+            );
+        }
+
+        console.log(`[${new Date().toISOString()}] 🎨 Generating image for user: ${g}`);
+
+        // Fetch GitHub data
+        let userStats: any = {};
+        let contributionStats: any = {};
+        let graphSVG = "";
+
+        if (g) {
+            try {
+                const currentYear = new Date().getFullYear();
+                const contributionDays = await fetchYearContributions(g, currentYear);
+                graphSVG = generateContributionGraph(contributionDays);
+                const userData = await fetchUserData(g);
+                userStats = userData.userStats;
+                contributionStats = await fetchContributions(g);
+            } catch (error) {
+                console.error("❌ Error fetching GitHub data:", error);
+                userStats = {};
+                contributionStats = {};
+            }
+        }
+
+        // Generate HTML template matching BentoClassic.tsx design
+         const html = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8" />
     <title>Open Readme</title>
@@ -546,151 +621,243 @@ export async function POST(req: NextRequest) {
     <script>lucide.createIcons();</script>
   </body>
 </html>`;
-    /* stylelint-enable */
 
-    if (!process.env.GITHUB_TOKEN) {
-        throw new Error("GitHub token not configured");
-    }
+        if (!process.env.GITHUB_TOKEN) {
+            throw new Error("GitHub token not configured");
+        }
 
-    // Launch browser and capture screenshot
-    const isProduction = process.env.NODE_ENV === 'production';
-    const isVercel = !!process.env.VERCEL;
+        // Launch browser and capture screenshot
+        console.log('🚀 Starting browser launch...');
+        const isProduction = process.env.NODE_ENV === 'production';
+        const isVercel = !!process.env.VERCEL;
+        console.log(`Environment: ${isProduction ? 'production' : 'development'}, Vercel: ${isVercel}`);
 
-    let browser: any;
-    if (isVercel || isProduction) {
-        const chromium = await import('@sparticuz/chromium');
-        const puppeteerCore = await import('puppeteer-core');
-        browser = await puppeteerCore.default.launch({
-            args: chromium.default.args,
-            defaultViewport: { width: 1400, height: 1800 },
-            executablePath: await chromium.default.executablePath(),
-            headless: true,
-        });
-    } else {
-        const puppeteerLocal = await import('puppeteer');
-        browser = await puppeteerLocal.default.launch({
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu'
-            ],
-            defaultViewport: { width: 1400, height: 1800 },
-            headless: true,
-        });
-    }
+        let browser: any;
+        try {
+            if (isVercel || isProduction) {
+                console.log('📦 Loading Chromium for production...');
+                const chromium = await import('@sparticuz/chromium');
+                const puppeteerCore = await import('puppeteer-core');
+                browser = await puppeteerCore.default.launch({
+                    args: chromium.default.args,
+                    defaultViewport: { width: 1400, height: 1800 },
+                    executablePath: await chromium.default.executablePath(),
+                    headless: true,
+                });
+                console.log('✅ Chromium browser launched successfully');
+            } else {
+                console.log('💻 Loading Puppeteer for development...');
+                const puppeteerLocal = await import('puppeteer');
+                browser = await puppeteerLocal.default.launch({
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--disable-gpu'
+                    ],
+                    defaultViewport: { width: 1400, height: 1800 },
+                    headless: true,
+                });
+                console.log('✅ Local Puppeteer browser launched successfully');
+            }
 
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1400, height: 1800, deviceScaleFactor: 1.5 });
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+            console.log('📄 Creating new page...');
+            const page = await browser.newPage();
+            await page.setViewport({ width: 1400, height: 1800, deviceScaleFactor: 1.5 });
 
-    const screenshot = await page.screenshot({ type: "png", fullPage: true }) as Buffer;
-    await browser.close();
+            console.log('🎨 Setting page content...');
+            await page.setContent(html, { waitUntil: "networkidle0" });
 
-    // Get version from query params if provided
-    const version = req.nextUrl.searchParams.get('v') || undefined;
+            console.log('📸 Taking screenshot...');
+            const screenshot = await page.screenshot({ type: "png", fullPage: true }) as Buffer;
+            console.log(`✅ Screenshot captured: ${screenshot.length} bytes`);
 
-    // Upload to GitHub
-    try {
-        const imageUrl = await uploadToGitHubSafely(screenshot, process.env.GITHUB_TOKEN, username, version);
+            await browser.close();
+            console.log('🔒 Browser closed successfully');
+
+            // Get version from query params if provided
+            const versionParam = req.nextUrl.searchParams.get('v');
+            const version = versionParam ? parseInt(versionParam, 10) : undefined;
+
+            // Upload to GitHub
+            try {
+                const uploadToken = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_IMAGES;
+                if (!uploadToken) {
+                    throw new Error("GitHub token not configured");
+                }
+                
+                const imageUrl = await uploadToGitHubSafely(g, screenshot, uploadToken, version);
+                console.log('✅ Image uploaded to GitHub:', imageUrl);
+                
+                // Log usage statistics
+                await logUserGeneration(g, uploadToken);
+                
+                return new NextResponse(JSON.stringify({
+                    url: imageUrl,
+                    method: "github_upload",
+                    message: "Image successfully uploaded to GitHub",
+                    user: g
+                }), {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Cache-Control": "public, max-age=3600",
+                    },
+                });
+            } catch (uploadError: any) {
+                console.error("❌ GitHub upload failed:", uploadError);
+                const base64 = screenshot.toString('base64');
+                
+                // Still log usage even if upload failed
+                const uploadToken = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_IMAGES;
+                if (uploadToken) {
+                    await logUserGeneration(g, uploadToken);
+                }
+                
+                return new NextResponse(JSON.stringify({
+                    url: `data:image/png;base64,${base64}`,
+                    method: "base64_fallback",
+                    message: "GitHub upload failed, using base64 fallback",
+                    warning: "Base64 images may not display properly in GitHub README",
+                    error: uploadError instanceof Error ? uploadError.message : String(uploadError)
+                }), {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Cache-Control": "public, max-age=300",
+                    },
+                });
+            }
+        } catch (browserError: any) {
+            console.error("💥 Browser error:", browserError);
+            return new NextResponse(JSON.stringify({
+                error: "Browser initialization failed",
+                message: browserError instanceof Error ? browserError.message : String(browserError),
+                timestamp: new Date().toISOString()
+            }), {
+                status: 500,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+    } catch (error: any) {
+        console.error("💥 Image generation error:", error);
         return new NextResponse(JSON.stringify({
-            url: imageUrl,
-            method: "github",
-            message: "Image uploaded to GitHub successfully",
+            error: "Failed to generate image",
+            message: error instanceof Error ? error.message : String(error),
             timestamp: new Date().toISOString(),
-            user: g
+            stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
         }), {
-            headers: {
-                "Content-Type": "application/json",
-                "Cache-Control": "public, max-age=3600",
-            },
-        });
-    } catch (uploadError: any) {
-        console.error("❌ GitHub upload failed:", uploadError);
-        const base64 = screenshot.toString('base64');
-        return new NextResponse(JSON.stringify({
-            url: `data:image/png;base64,${base64}`,
-            method: "base64_fallback",
-            message: "GitHub upload failed, using base64 fallback",
-            warning: "Base64 images may not display properly in GitHub README",
-            error: uploadError instanceof Error ? uploadError.message : String(uploadError)
-        }), {
-            headers: {
-                "Content-Type": "application/json",
-                "Cache-Control": "public, max-age=300",
-            },
+            status: 500,
+            headers: { "Content-Type": "application/json" }
         });
     }
-  } catch (error: any) {
-    console.error("💥 Image generation error:", error);
-    return new NextResponse(JSON.stringify({
-        error: "Failed to generate image",
-        message: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString(),
-        stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
-    }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-    });
-  }
 }
 
-const githubToken = process.env.GITHUB_TOKEN_IMAGES
+// Use consistent token for both image upload and stats logging
+const githubToken = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_IMAGES;
 
 function ghHeaders() {
-  return {
-    Authorization: `token ${githubToken}`,
-    Accept: 'application/vnd.github.v3+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  }
-}
-
-function assertToken() {
-  if (!githubToken) {
-    throw new Error('Missing GITHUB_TOKEN_IMAGES env var in Vercel')
-  }
+    return {
+        Authorization: `token ${githubToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+    };
 }
 
 export async function GET(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}))
-    const username = extractUsername(req, body)
-    if (!isValidGitHubUsername(username)) {
-      return NextResponse.json(
-        { error: "Valid GitHub username is required (2-39 characters)" },
-        { status: 400 }
-      )
-    }
-    assertToken()
+    try {
+        const { searchParams } = new URL(req.url);
+        const username = searchParams.get('github');
 
-    // Example read call to images repo
-    const statsFile = 'path/to/image.png' // your logic here
-    const ghRes = await fetch(
-      `https://api.github.com/repos/ravixalgorithm/openreadme-images/contents/${statsFile}`,
-      { headers: ghHeaders(), cache: 'no-store' }
-    )
-    if (!ghRes.ok) {
-      const msg = await ghRes.text()
-      return NextResponse.json({ error: `GitHub API failed: ${ghRes.status} ${msg}` }, { status: 502 })
-    }
-    const data = await ghRes.json()
-    const url = `https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/${data.path}`
+        console.log('Received request for user:', username);
+        console.log('Request URL:', req.url);
 
-    return NextResponse.json({ url })
-  } catch (error: any) {
-    console.error("💥 Image retrieval error:", error);
-    return new NextResponse(JSON.stringify({
-        error: "Failed to retrieve image",
-        message: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString(),
-        stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
-    }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-    });
-  }
+        if (!username || !isValidGitHubUsername(username)) {
+            console.error('Invalid username:', username);
+            return NextResponse.json(
+                { error: "Valid GitHub username is required (2-39 characters)" },
+                { status: 400 }
+            );
+        }
+
+        if (!githubToken) {
+            console.error('Missing GitHub token');
+            return NextResponse.json(
+                { error: "Server configuration error" },
+                { status: 500 }
+            );
+        }
+
+        const repoOwner = process.env.GITHUB_REPOSITORY_OWNER || 'Open-Dev-Society';
+        const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'openreadme';
+        const statsFile = 'stats/usage-log.json';
+
+        try {
+            const octokit = new Octokit({ auth: githubToken });
+
+            // First, check if the repository exists
+            try {
+                await octokit.repos.get({
+                    owner: repoOwner,
+                    repo: repoName
+                });
+            } catch (error: any) {
+                if (error.status === 404) {
+                    console.error(`Repository ${repoOwner}/${repoName} not found`);
+                    return NextResponse.json(
+                        {
+                            error: "Repository not found",
+                            message: `The repository ${repoOwner}/${repoName} does not exist or is not accessible`
+                        },
+                        { status: 404 }
+                    );
+                }
+                throw error;
+            }
+
+            // If we get here, the repository exists, try to get the file
+            const { data } = await octokit.repos.getContent({
+                owner: repoOwner,
+                repo: repoName,
+                path: statsFile,
+            });
+
+            if (Array.isArray(data) || !('content' in data)) {
+                throw new Error('Unexpected response from GitHub API');
+            }
+
+            const content = Buffer.from(data.content, 'base64').toString();
+            return NextResponse.json(JSON.parse(content));
+
+        } catch (error: any) {
+            if (error.status === 404) {
+                // File doesn't exist, return empty array
+                console.log('Stats file does not exist, returning empty array');
+                return NextResponse.json([]);
+            }
+
+            console.error('Error fetching stats:', error);
+            return NextResponse.json(
+                {
+                    error: "Failed to fetch statistics",
+                    message: error.message,
+                    details: error.status === 403 ?
+                        "Access denied. Please check your GitHub token permissions." :
+                        "An error occurred while fetching statistics"
+                },
+                { status: error.status || 500 }
+            );
+        }
+    } catch (error: any) {
+        console.error("💥 Error in GET handler:", error);
+        return NextResponse.json(
+            {
+                error: "Internal server error",
+                message: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            },
+            { status: 500 }
+        );
+    }
 }
