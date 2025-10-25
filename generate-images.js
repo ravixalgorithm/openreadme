@@ -2,15 +2,20 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const { execSync } = require('child_process');
 
-// Get the API URL from environment variables
 const API_URL = process.env.API_URL || 'http://localhost:3000';
+<<<<<<< HEAD
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.IMAGE_TOKEN;
+=======
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const REPO_OWNER = 'Open-Dev-Society';
+const REPO_NAME = 'openreadme';
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
 
 async function generateProfileImage(username, userId) {
   try {
     console.log(`Generating image for ${username}...`);
 
-    // First, get the user data from GitHub API
+    // Get user data from GitHub API
     const userResponse = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
         'Authorization': `token ${GITHUB_TOKEN}`,
@@ -25,21 +30,32 @@ async function generateProfileImage(username, userId) {
 
     const userData = await userResponse.json();
 
+<<<<<<< HEAD
     // Prepare the data for the OpenReadme API
+=======
+    // Build API URL with repository parameters
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
     const params = new URLSearchParams({
       n: userData.name || username,
       i: userData.avatar_url || '',
       github: username,
       x: userData.twitter_username || '',
+<<<<<<< HEAD
       l: userData.blog || userData.html_url || '',
       p: userData.html_url || '',
       t: 'classic'
+=======
+      l: userData.blog || userData.html_url,
+      p: userData.html_url,
+      t: 'classic',
+      repo: `${REPO_OWNER}/${REPO_NAME}`,
+      path: 'stats/usage-log.json'
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
     });
 
     const apiUrl = `${API_URL}?${params.toString()}`;
     console.log(`Calling API: ${apiUrl}`);
 
-    // Call the OpenReadme API with proper headers
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
@@ -58,7 +74,6 @@ async function generateProfileImage(username, userId) {
 
     const result = await response.json();
     console.log(`✅ Successfully generated image for ${username}: ${result.url}`);
-
     return result.url;
 
   } catch (error) {
@@ -74,7 +89,6 @@ async function generateProfileImage(username, userId) {
 
   for (const mapping of mappings) {
     if (!mapping) continue;
-
     const [username, userId] = mapping.split('=');
     if (!username || !userId) continue;
 
@@ -90,6 +104,5 @@ async function generateProfileImage(username, userId) {
       console.error(`Error processing ${username}:`, error);
     }
   }
-
   console.log('\n--- All users processed ---');
 })();

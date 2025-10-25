@@ -7,9 +7,9 @@ on:
     - cron: '0 0 * * *'
 
 permissions:
-  contents: write  # Required for pushing changes
-  pull-requests: write  # Required for creating pull requests
-  packages: read  # Required for reading package information
+  contents: write
+  pull-requests: write
+  packages: read
   actions: read
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.IMAGE_TOKEN || github.token }}
-          fetch-depth: 0  # Fetch all history for all branches and tags
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,9 +34,26 @@ jobs:
       - name: Read user mappings
         id: user-mappings
         run: |
-          # Read the user-mapping.json file
           MAPPINGS=$(jq -r 'to_entries | map("\(.key)=\(.value)") | join(" ")' data/user-mapping.json)
           echo "mappings=${MAPPINGS}" >> $GITHUB_OUTPUT
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions@github.com"
+          git config --global --add safe.directory /github/workspace
+
+      - name: Stage any existing changes
+        run: |
+          git config --global --add safe.directory /github/workspace
+          git add .
+
+      - name: Commit any existing changes
+        run: |
+          git diff-index --quiet HEAD || git commit -m "chore: update generated files [skip ci]"
+
+      - name: Pull latest changes
+        run: git pull origin main --rebase
 
       - name: Generate profile images
         env:
@@ -44,23 +61,27 @@ jobs:
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Install required dependencies
           npm install node-fetch@2
 
-          # Create the generation script
           cat > generate-images.js << 'EOL'
           const fs = require('fs');
           const fetch = require('node-fetch');
 
+<<<<<<< HEAD
           // Get the API URL from environment variables
           const API_URL = https://openreadme.vercel.app/api/openreadme || 'http://localhost:3000';
+=======
+          const API_URL = process.env.API_URL || 'http://localhost:3000';
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
           const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+          const REPO_OWNER = 'Open-Dev-Society';
+          const REPO_NAME = 'openreadme';
 
           async function generateProfileImage(username, userId) {
             try {
               console.log(`🎨 Generating image for ${username} (${userId})...`);
 
-              // First, get the user data from GitHub API
+              // Get user data from GitHub API
               const userResponse = await fetch(`https://api.github.com/users/${username}`, {
                 headers: {
                   'Authorization': `token ${GITHUB_TOKEN}`,
@@ -76,6 +97,7 @@ jobs:
 
               const userData = userResponse.ok ? await userResponse.json() : { login: username };
 
+<<<<<<< HEAD
               // Prepare the data for the OpenReadme API (using POST method)
               const requestBody = {
                 username: username,
@@ -83,28 +105,47 @@ jobs:
               };
 
               // Add query parameters for additional data
+=======
+              // Build API URL with repository parameters
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
               const params = new URLSearchParams({
                 n: userData.name || username,
                 i: userData.avatar_url || '',
                 g: username,
                 x: userData.twitter_username || '',
+<<<<<<< HEAD
                 l: userData.blog || userData.html_url || '',
                 p: userData.html_url || `https://github.com/${username}`,
                 t: 'classic'
+=======
+                l: userData.blog || userData.html_url,
+                p: userData.html_url,
+                t: 'classic',
+                repo: `${REPO_OWNER}/${REPO_NAME}`,
+                path: 'stats/usage-log.json'
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
               });
 
               const apiUrl = `${API_URL}?${params.toString()}`;
               console.log(`📡 Calling API: ${apiUrl}`);
 
+<<<<<<< HEAD
               // Call the OpenReadme API with POST method (as per your route.ts)
+=======
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
               const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                   'Accept': 'application/json',
                   'Content-Type': 'application/json',
+<<<<<<< HEAD
                   'User-Agent': 'OpenReadme-Workflow'
                 },
                 body: JSON.stringify(requestBody)
+=======
+                  'Authorization': `token ${GITHUB_TOKEN}`
+                }
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
               });
 
               console.log(`📊 Response status: ${response.status} ${response.statusText}`);
@@ -116,10 +157,14 @@ jobs:
               }
 
               const result = await response.json();
+<<<<<<< HEAD
               console.log(`✅ Successfully generated image for ${username}`);
               console.log(`🔗 Image URL: ${result.url}`);
               console.log(`📝 Method: ${result.method}`);
 
+=======
+              console.log(`✅ Successfully generated image for ${username}: ${result.url}`);
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
               return result.url;
 
             } catch (error) {
@@ -137,6 +182,7 @@ jobs:
               console.log(`📋 Found ${mappings.length} users to process`);
               console.log(`🔧 Using API URL: ${API_URL}`);
 
+<<<<<<< HEAD
               if (mappings.length === 0) {
                 console.log('⚠️  No user mappings found to process');
                 return;
@@ -144,10 +190,17 @@ jobs:
 
               let successCount = 0;
               let errorCount = 0;
+=======
+            for (const mapping of mappings) {
+              if (!mapping) continue;
+              const [username, userId] = mapping.split('=');
+              if (!username || !userId) continue;
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
 
               for (const mapping of mappings) {
                 if (!mapping.trim()) continue;
 
+<<<<<<< HEAD
                 const [username, userId] = mapping.split('=');
                 if (!username || !userId) {
                   console.warn(`⚠️  Invalid mapping format: ${mapping}`);
@@ -195,21 +248,33 @@ jobs:
 
           # Run the generation script with your deployed URL
           # TODO: Replace with your actual Vercel deployment URL
+=======
+              try {
+                const imageUrl = await generateProfileImage(username, userId);
+                if (imageUrl) {
+                  console.log(`Image URL: ${imageUrl}`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              } catch (error) {
+                console.error(`Error processing ${username}:`, error);
+              }
+            }
+            console.log('\n--- All users processed ---');
+          })();
+          EOL
+
+>>>>>>> b4ad3355e213c9e7566f12029203124cdbcaa453
           MAPPINGS="${{ steps.user-mappings.outputs.mappings }}" \
           API_URL="https://openreadme.vercel.app/api/openreadme" \
           node generate-images.js
 
-      - name: Pull latest changes
-        run: git pull origin main --rebase
       - name: Commit and push changes
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || secrets.IMAGE_TOKEN }}
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions@github.com"
-          git config --global --add safe.directory /github/workspace
           git add .
-          git diff --quiet && git diff --staged --quiet || \
-            (git commit -m "chore: update profile images [skip ci]" && \
-             git push https://${{ github.actor }}:$GITHUB_TOKEN@github.com/${{ github.repository }}.git HEAD:main)
+          if ! git diff-index --quiet HEAD --; then
+            git commit -m "chore: update profile images [skip ci]" && \
+            git push https://${{ github.actor }}:$GITHUB_TOKEN@github.com/${{ github.repository }}.git HEAD:main
+          fi
