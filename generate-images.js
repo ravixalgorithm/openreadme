@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 
 // Get the API URL from environment variables
 const API_URL = process.env.API_URL || 'http://localhost:3000';
-const IMAGE_TOKEN = process.env.IMAGE_TOKEN;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.IMAGE_TOKEN;
 
 async function generateProfileImage(username, userId) {
   try {
@@ -13,27 +13,27 @@ async function generateProfileImage(username, userId) {
     // First, get the user data from GitHub API
     const userResponse = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
-        'Authorization': `token ${IMAGE_TOKEN}`,
+        'Authorization': `token ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json'
       }
     });
 
     if (!userResponse.ok) {
-      throw new Error(`GitHub API error: ${userResponse.statusText}`);
+      const error = await userResponse.text();
+      throw new Error(`GitHub API error: ${userResponse.status} ${error}`);
     }
 
     const userData = await userResponse.json();
 
     // Prepare the data for the OpenReadme API
-    // Build the API URL with all parameters
     const params = new URLSearchParams({
       n: userData.name || username,
       i: userData.avatar_url || '',
       github: username,
       x: userData.twitter_username || '',
-      l: '',  // LinkedIn would need to be handled separately
-      p: userData.blog || userData.html_url,
-      t: 'classic'  // Default theme
+      l: userData.blog || userData.html_url || '',
+      p: userData.html_url || '',
+      t: 'classic'
     });
 
     const apiUrl = `${API_URL}?${params.toString()}`;
@@ -44,7 +44,8 @@ async function generateProfileImage(username, userId) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `token ${GITHUB_TOKEN}`
       }
     });
 
@@ -68,7 +69,7 @@ async function generateProfileImage(username, userId) {
 
 // Process all users
 (async () => {
-  const mappings = process.env.MAPPINGS.split(' ');
+  const mappings = process.env.MAPPINGS ? process.env.MAPPINGS.split(' ') : [];
   console.log(`Found ${mappings.length} users to process`);
 
   for (const mapping of mappings) {
@@ -82,13 +83,9 @@ async function generateProfileImage(username, userId) {
     try {
       const imageUrl = await generateProfileImage(username, userId);
       if (imageUrl) {
-        // Here you could update the user-mapping.json with the new image URL if needed
         console.log(`Image URL: ${imageUrl}`);
       }
-
-      // Add delay to avoid rate limiting (1 second between requests)
       await new Promise(resolve => setTimeout(resolve, 1000));
-
     } catch (error) {
       console.error(`Error processing ${username}:`, error);
     }

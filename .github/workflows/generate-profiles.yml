@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || secrets.IMAGE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Install required dependencies
           npm install node-fetch@2
@@ -51,104 +51,150 @@ jobs:
           cat > generate-images.js << 'EOL'
           const fs = require('fs');
           const fetch = require('node-fetch');
-          const { execSync } = require('child_process');
 
           // Get the API URL from environment variables
-          const API_URL = process.env.API_URL || 'http://localhost:3000';
+          const API_URL = https://openreadme.vercel.app/api/openreadme || 'http://localhost:3000';
           const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
           async function generateProfileImage(username, userId) {
             try {
-              console.log(`Generating image for ${username}...`);
+              console.log(`🎨 Generating image for ${username} (${userId})...`);
 
               // First, get the user data from GitHub API
               const userResponse = await fetch(`https://api.github.com/users/${username}`, {
                 headers: {
                   'Authorization': `token ${GITHUB_TOKEN}`,
-                  'Accept': 'application/vnd.github.v3+json'
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'OpenReadme-Workflow'
                 }
               });
 
               if (!userResponse.ok) {
-                throw new Error(`GitHub API error: ${userResponse.statusText}`);
+                console.warn(`⚠️  GitHub API warning for ${username}: ${userResponse.statusText}`);
+                // Continue with basic data if GitHub API fails
               }
 
-              const userData = await userResponse.json();
+              const userData = userResponse.ok ? await userResponse.json() : { login: username };
 
-              // Prepare the data for the OpenReadme API
+              // Prepare the data for the OpenReadme API (using POST method)
+              const requestBody = {
+                username: username,
+                github: username
+              };
+
+              // Add query parameters for additional data
               const params = new URLSearchParams({
                 n: userData.name || username,
                 i: userData.avatar_url || '',
-                github: username,
+                g: username,
                 x: userData.twitter_username || '',
-                l: userData.blog || userData.html_url,
-                p: userData.html_url,
-                t: 'classic'  // Default theme
+                l: userData.blog || userData.html_url || '',
+                p: userData.html_url || `https://github.com/${username}`,
+                t: 'classic'
               });
 
               const apiUrl = `${API_URL}?${params.toString()}`;
-              console.log(`Calling API: ${apiUrl}`);
+              console.log(`📡 Calling API: ${apiUrl}`);
 
-              // Call the OpenReadme API with proper headers
+              // Call the OpenReadme API with POST method (as per your route.ts)
               const response = await fetch(apiUrl, {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                   'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-                }
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'OpenReadme-Workflow'
+                },
+                body: JSON.stringify(requestBody)
               });
 
-              console.log(`Response status: ${response.status} ${response.statusText}`);
+              console.log(`📊 Response status: ${response.status} ${response.statusText}`);
 
               if (!response.ok) {
-                const error = await response.text();
-                throw new Error(`API error: ${error}`);
+                const errorText = await response.text();
+                console.error(`❌ API error response: ${errorText}`);
+                throw new Error(`API error (${response.status}): ${errorText}`);
               }
 
               const result = await response.json();
-              console.log(`✅ Successfully generated image for ${username}: ${result.url}`);
+              console.log(`✅ Successfully generated image for ${username}`);
+              console.log(`🔗 Image URL: ${result.url}`);
+              console.log(`📝 Method: ${result.method}`);
 
               return result.url;
 
             } catch (error) {
               console.error(`❌ Error generating image for ${username}:`, error.message);
+              console.error(`🔍 Stack trace:`, error.stack);
               return null;
             }
           }
 
           // Process all users
           (async () => {
-            const mappings = process.env.MAPPINGS.split(' ');
-            console.log(`Found ${mappings.length} users to process`);
+            try {
+              const mappingsString = process.env.MAPPINGS || '';
+              const mappings = mappingsString.split(' ').filter(m => m.trim());
+              console.log(`📋 Found ${mappings.length} users to process`);
+              console.log(`🔧 Using API URL: ${API_URL}`);
 
-            for (const mapping of mappings) {
-              if (!mapping) continue;
+              if (mappings.length === 0) {
+                console.log('⚠️  No user mappings found to process');
+                return;
+              }
 
-              const [username, userId] = mapping.split('=');
-              if (!username || !userId) continue;
+              let successCount = 0;
+              let errorCount = 0;
 
-              console.log(`\n--- Processing ${username} (${userId}) ---`);
+              for (const mapping of mappings) {
+                if (!mapping.trim()) continue;
 
-              try {
-                const imageUrl = await generateProfileImage(username, userId);
-                if (imageUrl) {
-                  // Here you could update the user-mapping.json with the new image URL if needed
-                  console.log(`Image URL: ${imageUrl}`);
+                const [username, userId] = mapping.split('=');
+                if (!username || !userId) {
+                  console.warn(`⚠️  Invalid mapping format: ${mapping}`);
+                  continue;
                 }
 
-                // Add delay to avoid rate limiting (1 second between requests)
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log(`\n${'='.repeat(50)}`);
+                console.log(`🔄 Processing ${username} (${userId})`);
+                console.log(`${'='.repeat(50)}`);
 
-              } catch (error) {
-                console.error(`Error processing ${username}:`, error);
+                try {
+                  const imageUrl = await generateProfileImage(username, userId);
+                  if (imageUrl) {
+                    successCount++;
+                    console.log(`✅ Success for ${username}: ${imageUrl}`);
+                  } else {
+                    errorCount++;
+                    console.log(`❌ Failed for ${username}`);
+                  }
+
+                  // Add delay to avoid rate limiting (2 seconds between requests)
+                  console.log(`⏳ Waiting 2 seconds before next request...`);
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+
+                } catch (error) {
+                  errorCount++;
+                  console.error(`💥 Error processing ${username}:`, error.message);
+                }
               }
-            }
 
-            console.log('\n--- All users processed ---');
+              console.log(`\n${'='.repeat(60)}`);
+              console.log(`📊 WORKFLOW SUMMARY`);
+              console.log(`${'='.repeat(60)}`);
+              console.log(`✅ Successful: ${successCount}`);
+              console.log(`❌ Failed: ${errorCount}`);
+              console.log(`📋 Total: ${successCount + errorCount}`);
+              console.log(`${'='.repeat(60)}`);
+
+            } catch (error) {
+              console.error('💥 Workflow failed:', error.message);
+              process.exit(1);
+            }
           })();
           EOL
 
-          # Run the generation script
+          # Run the generation script with your deployed URL
+          # TODO: Replace with your actual Vercel deployment URL
           MAPPINGS="${{ steps.user-mappings.outputs.mappings }}" \
           API_URL="https://openreadme.vercel.app/api/openreadme" \
           node generate-images.js
