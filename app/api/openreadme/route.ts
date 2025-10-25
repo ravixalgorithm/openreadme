@@ -198,6 +198,7 @@ async function logUserGeneration(username: string, githubToken: string): Promise
     } catch (error) {
         console.error('❌ Stats logging failed (non-critical):', error);
         console.error('This means usage statistics will not be recorded, but image generation continues.');
+        // Don't throw error - continue with image generation even if logging fails
     }
 }
 
