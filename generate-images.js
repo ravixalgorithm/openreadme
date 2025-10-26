@@ -55,6 +55,7 @@ async function generateProfileImage(username, userId) {
 
     // Build API URL with parameters
     const params = new URLSearchParams({
+      username: username,  // Required for API validation
       n: name,
       i: profilePic,
       g: username,
