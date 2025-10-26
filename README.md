@@ -21,9 +21,9 @@
 
 # OpenReadme
 
-OpenReadme is a modern, open-source GitHub profile README generator that creates beautiful, customizable bento-style grids. Built with Next.js and serverless technology, it allows you to create stunning profile README banners. 
+OpenReadme is a modern, open-source GitHub profile README generator that creates beautiful, customizable bento-style grids. Built with Next.js and serverless technology, it generates stunning profile images that **automatically update daily** with your latest GitHub stats.
 
-> **Note**: Workflow automation and auto-updating features are currently under development. For now, OpenReadme supports only **static image creation**.
+> **✨ New**: Automated daily updates are now live! Your profile image refreshes automatically every day at midnight UTC with your latest GitHub statistics.
 
 ---
 
@@ -48,29 +48,39 @@ OpenReadme is a modern, open-source GitHub profile README generator that creates
 
 ## ✨ Introduction
 
-OpenReadme is a cutting-edge GitHub profile README generator powered by Next.js (App Router), Tailwind CSS, and serverless Chromium for dynamic image generation. Create stunning profile banners for your GitHub README with ease. 
+OpenReadme is a cutting-edge GitHub profile README generator powered by Next.js (App Router), Tailwind CSS, and serverless Chromium for dynamic image generation. Create stunning profile banners for your GitHub README that **automatically update daily** with your latest stats.
 
-Currently, OpenReadme supports **static image generation only**, and the auto-updating workflow feature is in progress.
+**How It Works:**
+1. 🎨 Fill in your profile information on the dashboard
+2. 💾 Save your data (stored securely in the repository)
+3. 🤖 Our automated workflow generates your image daily at midnight UTC
+4. 🔗 Get a static URL that always shows your latest stats
+5. ✨ Embed it in your README and forget about it!
 
 ---
 
 ## 🔋 Features
 
-- **🎨 Profile Generation**
-    - Beautiful bento-style grid layouts
-    - Customizable profile information display
+- **🎨 Beautiful Profile Generation**
+    - Multiple customizable themes
+    - Bento-style grid layouts
+    - Real-time GitHub stats (contributions, stars, PRs, issues)
     - Social media integration (GitHub, Twitter, LinkedIn)
-    - Portfolio and website links
+    - Custom profile pictures and portfolio links
 
-- **🔄 Auto-Updates (Upcoming)**
-    - GitHub Actions workflow generation
-    - Scheduled profile image updates
-    - Real-time GitHub stats integration
-    - Automatic cache invalidation
+- **🔄 Automated Daily Updates** ✨
+    - Automatic image regeneration every day at midnight UTC
+    - GitHub Actions workflow handles everything
+    - Static URLs that always stay current
+    - No manual intervention required
+    - Your stats are always fresh
 
-- **⚡ Current Functionality**
-    - Static image generation through the RESTful API
-    - Simplified and lightweight setup for immediate use
+- **⚡ Simple Setup**
+    - Fill in your profile once on the dashboard
+    - Save your data (commits to repository)
+    - Get your permanent image URL
+    - Embed in your README
+    - Done! Updates happen automatically
 
 - **🌐 API-First Design**
     - RESTful image generation API
@@ -144,18 +154,24 @@ Create `.env.local` at the project root:
 # Core Configuration
 NODE_ENV=development
 
-# GitHub Integration (Future Use)
+# GitHub Integration (Required for automated workflow)
 GITHUB_TOKEN=ghp_your_personal_access_token_here
+GITHUB_TOKEN_IMAGES=ghp_your_token_for_image_storage  # Optional, falls back to GITHUB_TOKEN
 
 # Optional: Local Development
 CHROME_EXECUTABLE_PATH=  # Optional for local Chromium path
 ```
+
+**GitHub Token Permissions Required:**
+- `repo` - Full control of private repositories (for updating user data files)
+- `workflow` - Update GitHub Action workflows
 
 **Security Notes**
 - Keep private tokens server-side when possible
 - Use environment-specific configurations
 - Never commit sensitive credentials to version control
 - Consider using secure environment management tools
+- For production deployment (Vercel), add tokens to environment variables
 
 ---
 
@@ -167,7 +183,12 @@ OpenReadme is and will remain free and open for everyone. This project is licens
 
 ## 🙏 Acknowledgements
 
-Special thanks to the open-source community and all contributors who make OpenReadme possible. Your support drives us forward as we work on the upcoming features.
+Special thanks to:
+- **[OpBento by EdgeX HQ](https://opbento.edgexhq.tech)** - The original inspiration for this project
+- The open-source community and all contributors who make OpenReadme possible
+- Everyone using OpenReadme to showcase their work beautifully
+
+Your support drives us forward! ⭐
 
 ---
 
