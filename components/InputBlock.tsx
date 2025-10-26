@@ -133,6 +133,7 @@ export default function InputBlock({
 
   const saveUserProfile = async (username: string) => {
     try {
+      console.log("💾 Saving user profile for:", username);
       const response = await fetch("/api/user-profile", {
         method: "POST",
         headers: {
@@ -148,11 +149,18 @@ export default function InputBlock({
         }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        console.error("Failed to save user profile");
+        console.error("❌ Failed to save user profile:", data);
+        toast.error(data.error || "Failed to save profile");
+      } else {
+        console.log("✅ Profile saved successfully:", data);
+        toast.success("Profile data saved!");
       }
     } catch (error) {
-      console.error("Error saving user profile:", error);
+      console.error("❌ Error saving user profile:", error);
+      toast.error("Error saving profile data");
     }
   };
 
