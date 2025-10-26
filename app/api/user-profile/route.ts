@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 const USER_PROFILES_PATH = path.join(process.cwd(), "data", "user-profiles.json");
 const USER_MAPPING_PATH = path.join(process.cwd(), "data", "user-mapping.json");
@@ -82,6 +83,21 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Helper function to write user mapping
+function writeUserMapping(mapping: UserMapping): void {
+  try {
+    fs.writeFileSync(USER_MAPPING_PATH, JSON.stringify(mapping, null, 2), "utf-8");
+  } catch (error) {
+    console.error("Error writing user mapping:", error);
+    throw error;
+  }
+}
+
+// Helper function to generate hash ID
+function generateHashId(username: string): string {
+  return crypto.createHash('sha256').update(username.toLowerCase()).digest('hex').substring(0, 12);
+}
+
 // POST: Save or update user profile
 export async function POST(req: NextRequest) {
   try {
@@ -95,18 +111,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if username exists in user-mapping.json
+    // Read current mappings and profiles
     const userMapping = readUserMapping();
-    if (!userMapping[username]) {
-      return NextResponse.json(
-        { error: "Username not found in user mapping. Please contact admin to add your username first." },
-        { status: 403 }
-      );
-    }
-
     const profiles = readUserProfiles();
 
-    // Only update existing profile or create if username is in mapping
+    // If user doesn't exist in mapping, add them with a generated hash ID
+    if (!userMapping[username]) {
+      const hashId = generateHashId(username);
+      userMapping[username] = hashId;
+      writeUserMapping(userMapping);
+      console.log(`✅ Added new user to mapping: ${username} -> ${hashId}`);
+    }
+
+    // Save or update user profile
     profiles[username] = {
       name: name || "",
       githubUsername: username,
