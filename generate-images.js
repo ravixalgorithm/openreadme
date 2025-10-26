@@ -1,16 +1,35 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
+const path = require('path');
 
 const API_URL = process.env.API_URL || 'https://openreadme.vercel.app/api/openreadme';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO_OWNER = 'Open-Dev-Society';
 const REPO_NAME = 'openreadme';
 
+// Read user profiles from JSON file
+function readUserProfiles() {
+  try {
+    const profilesPath = path.join(process.cwd(), 'data', 'user-profiles.json');
+    const data = fs.readFileSync(profilesPath, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('⚠️  Error reading user profiles:', error.message);
+    return {};
+  }
+}
+
 async function generateProfileImage(username, userId) {
   try {
     console.log(`🎨 Generating image for ${username} (${userId})...`);
 
-    // Get user data from GitHub API
+    // Read stored user profile data first
+    const userProfiles = readUserProfiles();
+    const storedProfile = userProfiles[username] || {};
+
+    console.log(`📦 Stored profile data:`, storedProfile);
+
+    // Get user data from GitHub API as fallback
     const userResponse = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
         'Authorization': `token ${GITHUB_TOKEN}`,
@@ -25,15 +44,23 @@ async function generateProfileImage(username, userId) {
 
     const userData = userResponse.ok ? await userResponse.json() : { login: username };
 
+    // Prioritize stored profile data over GitHub API data
+    const name = storedProfile.name || userData.name || username;
+    const profilePic = storedProfile.profilePic || userData.avatar_url || '';
+    const twitterUsername = storedProfile.twitterUsername || userData.twitter_username || '';
+    const linkedinUsername = storedProfile.linkedinUsername || '';
+    const portfolioUrl = storedProfile.portfolioUrl || userData.blog || userData.html_url || '';
+
+    console.log(`✅ Using data - Name: ${name}, Twitter: ${twitterUsername}, LinkedIn: ${linkedinUsername}`);
+
     // Build API URL with parameters
     const params = new URLSearchParams({
-      n: userData.name || username,
-      i: userData.avatar_url || '',
+      n: name,
+      i: profilePic,
       g: username,
-      username: username,  // Add this for proper username extraction
-      x: userData.twitter_username || '',
-      l: userData.blog || userData.html_url || '',
-      p: userData.html_url || `https://github.com/${username}`,
+      x: twitterUsername,
+      l: linkedinUsername,
+      p: portfolioUrl,
       t: 'classic'
     });
 
