@@ -46,7 +46,7 @@ export default function Home() {
   const testimonials = [
     {
       name: "Ravi Pratap Singh",
-      role: "Founder & Creator",
+      role: "Founder, Open Dev Society",
       username: "@ravixalgorithm",
       avatar: "https://avatars.githubusercontent.com/ravixalgorithm",
       quote: "I built Open Readme because I wanted every developer to have a beautiful, professional GitHub profile without the hassle. It's completely free, updates automatically, and built with love for the community. Seeing developers showcase their work beautifully makes it all worth it!",
@@ -54,7 +54,7 @@ export default function Home() {
     },
     {
       name: "Priyanshu Bhardwaj",
-      role: "Co-Founder",
+      role: "Co-Founder, Open Dev Society",
       username: "@priyanshucosmos",
       avatar: "https://avatars.githubusercontent.com/priyanshucosmos",
       quote: "Open Readme represents what open source should be—accessible, powerful, and community-first. It's amazing to see how a simple idea has evolved into a tool that helps developers worldwide present their best work. The automated workflow makes it effortless!",
