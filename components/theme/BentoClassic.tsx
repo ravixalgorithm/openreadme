@@ -566,18 +566,6 @@ const OpenReadmeGrid: React.FC<OpenReadmeGridProps> = ({
                                 </Button>
                             </AlertDialogHeader>
 
-                            {/* Warning Note - Enhanced */}
-                            {/* <div className="p-4 mb-6 border bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20 rounded-xl">
-                                <div className="flex items-center gap-3 text-amber-400">
-                                    <AlertTriangle className="flex-shrink-0 w-5 h-5" />
-                                    <div>
-                                        <p className="font-medium">Important Setup Information</p>
-                                        <p className="mt-1 text-sm text-amber-300/80">
-                                            Do not modify the downloaded files to ensure proper functionality
-                                        </p>
-                                    </div>
-                                </div>
-                            </div> */}
 
                             {/* Embed Link Section - Enhanced */}
                             <div className="mb-6 space-y-3">
@@ -603,66 +591,7 @@ const OpenReadmeGrid: React.FC<OpenReadmeGridProps> = ({
                                 </div>
                             </div>
 
-                            {/* Download Section - Enhanced */}
-                            {/* <div className="mb-6">
-                                <Button
-                                    onClick={handleDownload}
-                                    className="w-full py-6 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl"
-                                >
-                                    <Download className="w-5 h-5 mr-2" />
-                                    Download Setup Files
-                                </Button>
-                            </div>*/}
 
-                            {/* Files Preview - Enhanced */}
-                            {/* <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2">
-                                <div className="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 group hover:bg-gray-750 rounded-xl hover:border-gray-600">
-                                    <div className="flex flex-col gap-6 w-full">
-                                        <div className="flex flex-col gap-2 w-full">
-                                            <div className="flex items-center gap-2">
-                                                <UserIcon className="w-4 h-4 text-foreground/70" />
-                                                <p className="text-foreground/70 text-sm">Name</p>
-                                            </div>
-                                            <Input
-                                                value={name}
-                                                onChange={(e) => {
-                                                    // Handle name change if needed
-                                                }}
-                                                placeholder="Enter your name"
-                                                className="w-full"
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-lg bg-blue-500/20">
-                                                    <Code2 className="w-5 h-5 text-blue-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-white">get-openreadme.ts</p>
-                                                    <p className="text-xs text-gray-400">TypeScript automation script</p>
-                                                </div>
-                                            </div>
-                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-4 transition-all duration-300 bg-gray-800 border border-gray-700 group hover:bg-gray-750 rounded-xl hover:border-gray-600">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-red-500/20">
-                                                <FileText className="w-5 h-5 text-red-400" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-white">update-openreadme.yml</p>
-                                                <p className="text-xs text-gray-400">GitHub Actions workflow</p>
-                                            </div>
-                                        </div>
-                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                    </div>
-                                </div>
-                            </div>*/}
 
                             {/* Footer Actions - Enhanced */}
                             <div className="flex items-center justify-between pt-4 border-t border-gray-700">
@@ -671,7 +600,7 @@ const OpenReadmeGrid: React.FC<OpenReadmeGridProps> = ({
                                     className="inline-flex items-center gap-2 text-sm text-teal-400 transition-colors hover:text-teal-300"
                                 >
                                     <FileText className="w-4 h-4" />
-                                    Setup Guide
+                                    Guide
                                 </Link>
 
                                 <Button

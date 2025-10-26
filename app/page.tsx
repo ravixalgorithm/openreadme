@@ -3,11 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-  Check,
   Github,
   Star,
   Users,
-  Download,
   Zap,
   Palette,
   RefreshCw,
@@ -215,7 +213,7 @@ export default function Home() {
             <div key={index} className="relative group">
               <div className="h-full p-8 transition-all duration-300 border bg-gradient-to-br from-secondary/50 to-secondary/20 rounded-2xl border-secondary hover:border-teal-500/50 group-hover:shadow-xl group-hover:shadow-teal-500/10">
                 {/* Quote Icon */}
-                <div className="mb-6 text-6xl text-teal-500/20">"
+                <div className="mb-6 text-6xl text-teal-500/20">&ldquo;
                 </div>
                 
                 {/* Quote */}
