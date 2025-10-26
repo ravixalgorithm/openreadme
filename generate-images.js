@@ -30,6 +30,7 @@ async function generateProfileImage(username, userId) {
       n: userData.name || username,
       i: userData.avatar_url || '',
       g: username,
+      username: username,  // Add this for proper username extraction
       x: userData.twitter_username || '',
       l: userData.blog || userData.html_url || '',
       p: userData.html_url || `https://github.com/${username}`,
