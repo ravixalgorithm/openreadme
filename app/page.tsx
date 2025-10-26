@@ -23,29 +23,48 @@ export default function Home() {
   const features = [
     {
       icon: <Palette className="w-6 h-6" />,
-      title: "Customizable Grid Layout",
-      description: "Design your profile with beautiful bento-style grids"
+      title: "Multiple Themes",
+      description: "Choose from beautiful, customizable themes for your profile"
     },
     {
       icon: <RefreshCw className="w-6 h-6" />,
-      title: "Auto-Updates",
-      description: "Sync automatically with your latest GitHub activity"
+      title: "Daily Auto-Updates",
+      description: "Your profile refreshes automatically every day at midnight UTC"
     },
     {
-      icon: <Download className="w-6 h-6" />,
-      title: "One-Click Setup",
-      description: "Easy installation with downloadable config files"
+      icon: <Zap className="w-6 h-6" />,
+      title: "Static URLs",
+      description: "One permanent link that always stays up-to-date"
     },
     {
       icon: <Code className="w-6 h-6" />,
-      title: "Open Source",
-      description: "Fully transparent and community-driven development"
+      title: "100% Open Source",
+      description: "Free forever, transparent, and community-driven"
+    }
+  ];
+
+  const testimonials = [
+    {
+      name: "Ravi Pratap Singh",
+      role: "Founder, Open Dev Society",
+      username: "@ravixalgorithm",
+      avatar: "https://avatars.githubusercontent.com/ravixalgorithm",
+      quote: "I built Open Readme because I wanted every developer to have a beautiful, professional GitHub profile without the hassle. It's completely free, updates automatically, and built with love for the community. Seeing developers showcase their work beautifully makes it all worth it!",
+      link: "https://github.com/ravixalgorithm"
+    },
+    {
+      name: "Priyanshu Bhardwaj",
+      role: "Co-Founder, Open Dev Society",
+      username: "@priyanshucosmos",
+      avatar: "https://avatars.githubusercontent.com/priyanshucosmos",
+      quote: "Open Readme represents what open source should be—accessible, powerful, and community-first. It's amazing to see how a simple idea has evolved into a tool that helps developers worldwide present their best work. The automated workflow makes it effortless!",
+      link: "https://github.com/priyanshucosmos"
     }
   ];
 
   const stats = [
-    { label: "GitHub Stars", value: "10+", icon: <Star className="w-5 h-5" /> },
-    { label: "Active Users", value: "50+", icon: <Users className="w-5 h-5" /> },
+    { label: "GitHub Stars", value: "100+", icon: <Star className="w-5 h-5" /> },
+    { label: "Active Users", value: "200+", icon: <Users className="w-5 h-5" /> },
     { label: "Open Source", value: "100%", icon: <Github className="w-5 h-5" /> }
   ];
 
@@ -80,8 +99,8 @@ export default function Home() {
           </h1>
 
           <p className="max-w-3xl mx-auto mb-8 text-lg leading-relaxed text-muted-foreground sm:text-xl lg:text-2xl">
-            Create stunning, dynamic GitHub profiles with beautiful bento grids.
-            <span className="font-semibold text-foreground"> Open, Transparent, and Fully Yours.</span>
+            Create stunning, auto-updating GitHub profiles with beautiful bento grids.
+            <span className="font-semibold text-foreground"> Save once, update daily, impress forever.</span>
           </p>
 
           {/* CTA Buttons */}
@@ -174,6 +193,55 @@ export default function Home() {
                 </div>
                 <h3 className="mb-3 text-lg font-semibold">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="px-4 py-20 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl lg:text-5xl">
+            From the <span className="text-teal-500">Founders</span>
+          </h2>
+          <p className="max-w-3xl mx-auto text-xl text-muted-foreground">
+            Built with passion by developers who care about the community
+          </p>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2">
+          {testimonials.map((testimonial, index) => (
+            <div key={index} className="relative group">
+              <div className="h-full p-8 transition-all duration-300 border bg-gradient-to-br from-secondary/50 to-secondary/20 rounded-2xl border-secondary hover:border-teal-500/50 group-hover:shadow-xl group-hover:shadow-teal-500/10">
+                {/* Quote Icon */}
+                <div className="mb-6 text-6xl text-teal-500/20">"
+                </div>
+                
+                {/* Quote */}
+                <p className="mb-6 text-lg leading-relaxed text-muted-foreground">
+                  {testimonial.quote}
+                </p>
+
+                {/* Author Info */}
+                <div className="flex items-center gap-4">
+                  <a href={testimonial.link} target="_blank" rel="noopener noreferrer" className="transition-transform hover:scale-105">
+                    <Image
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      width={56}
+                      height={56}
+                      className="rounded-full ring-2 ring-teal-500/20"
+                    />
+                  </a>
+                  <div>
+                    <a href={testimonial.link} target="_blank" rel="noopener noreferrer" className="font-semibold transition-colors hover:text-teal-500">
+                      {testimonial.name}
+                    </a>
+                    <p className="text-sm text-teal-500">{testimonial.role}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.username}</p>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
