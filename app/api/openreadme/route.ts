@@ -360,7 +360,7 @@ export async function POST(req: NextRequest) {
         width: 1160px;
         max-width: 1160px;
         margin: 0 auto;
-        padding: 0 16px;
+        padding: 0 4px;
       }
       .grid-container {
         min-height: 1100px;
@@ -689,13 +689,13 @@ export async function POST(req: NextRequest) {
                 if (!uploadToken) {
                     throw new Error("GitHub token not configured");
                 }
-                
+
                 const imageUrl = await uploadToGitHubSafely(g, screenshot, uploadToken, version);
                 console.log('✅ Image uploaded to GitHub:', imageUrl);
-                
+
                 // Log usage statistics
                 await logUserGeneration(g, uploadToken);
-                
+
                 return new NextResponse(JSON.stringify({
                     url: imageUrl,
                     method: "github_upload",
@@ -710,13 +710,13 @@ export async function POST(req: NextRequest) {
             } catch (uploadError: any) {
                 console.error("❌ GitHub upload failed:", uploadError);
                 const base64 = screenshot.toString('base64');
-                
+
                 // Still log usage even if upload failed
                 const uploadToken = process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_IMAGES;
                 if (uploadToken) {
                     await logUserGeneration(g, uploadToken);
                 }
-                
+
                 return new NextResponse(JSON.stringify({
                     url: `data:image/png;base64,${base64}`,
                     method: "base64_fallback",
