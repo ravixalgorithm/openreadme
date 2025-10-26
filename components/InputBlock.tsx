@@ -118,6 +118,10 @@ export default function InputBlock({
 
       setGithubURL(gUrl);
       setSaved(prev => ({ ...prev, github: true }));
+      
+      // Save all current profile data to the backend
+      await saveUserProfile(gUrl);
+      
       toast.success("Github data loaded successfully");
     } catch (error) {
       console.error("GitHub data fetch error:", error);
@@ -127,9 +131,40 @@ export default function InputBlock({
     }
   };
 
-  const saveField = (field: string, value: string, setter: (val: string) => void) => {
+  const saveUserProfile = async (username: string) => {
+    try {
+      const response = await fetch("/api/user-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          name: nameText,
+          profilePic: iUrl,
+          twitterUsername: tUrl,
+          linkedinUsername: lUrl,
+          portfolioUrl: pUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to save user profile");
+      }
+    } catch (error) {
+      console.error("Error saving user profile:", error);
+    }
+  };
+
+  const saveField = async (field: string, value: string, setter: (val: string) => void) => {
     setter(value);
     setSaved(prev => ({ ...prev, [field]: true }));
+    
+    // Save to backend if GitHub username is set
+    if (gUrl) {
+      await saveUserProfile(gUrl);
+    }
+    
     toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} saved`);
   };
 
