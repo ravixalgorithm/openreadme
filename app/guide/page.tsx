@@ -5,18 +5,13 @@ import { useState, useEffect } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
 import {
     Check,
-    CirclePlay,
-    Download,
-    File,
     Menu,
-    Settings,
     X,
     ArrowUp,
 } from "lucide-react";
 import Link from "next/link";
 import { Spotlight } from "@/components/ui/Spotlight";
 import Image from "next/image";
-import { Tree } from "@/components/Tree";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
@@ -59,8 +54,8 @@ export default function Component() {
         { id: "introduction", title: "Introduction" },
         { id: "original-concept", title: "Original Concept & Inspiration", highlight: true },
         { id: "get-your-open-readme", title: "Get your Open Readme" },
-        { id: "after-you-have-generated-your-image", title: "After Image Generation" },
-        { id: "github-settings", title: "GitHub Settings" },
+        { id: "getting-your-profile-image", title: "Getting Your Profile Image" },
+        { id: "using-your-profile-image", title: "Using Your Profile Image" },
         { id: "finale", title: "Finale" },
     ];
 
@@ -144,6 +139,7 @@ export default function Component() {
                             </motion.div>
                         </section>
 
+                        {/* Original Concept Section*/}
                         <section id="original-concept" className="mb-20 scroll-mt-24">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -224,33 +220,79 @@ export default function Component() {
                                 <h2 className="text-3xl font-bold sm:text-4xl lg:text-5xl">
                                     Get Your Open Readme
                                 </h2>
-                                <p className="text-lg leading-relaxed text-muted-foreground">
-                                    Fill out the bio section with the information you want displayed.
-                                </p>
-                                <div className="relative overflow-hidden shadow-2xl rounded-2xl">
-                                    <Image
-                                        src="/guide1.png"
-                                        alt="Open Readme Generation Interface"
-                                        width={1200}
-                                        height={700}
-                                        className="object-cover w-full"
-                                        priority
-                                    />
-                                </div>
-                                <div className="p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl">
-                                    <p className="text-lg text-blue-900 dark:text-blue-100">
-                                        Click on the{" "}
-                                        <button className="inline-flex items-center justify-center h-10 px-4 py-2 mx-2 text-sm font-medium bg-teal-500 rounded-md whitespace-nowrap text-teal-500-foreground hover:bg-teal-500/90">
-                                            Generate Image
-                                        </button>
-                                        button. And Voila! This will generate a new image for you.
-                                    </p>
+
+                                <div className="space-y-6">
+                                    <div className="p-6 border border-teal-200 bg-teal-50 dark:bg-teal-950/20 dark:border-teal-800 rounded-xl">
+                                        <h3 className="mb-4 text-2xl font-semibold text-teal-900 dark:text-teal-100">
+                                            Step 1: Fill Your Profile Information
+                                        </h3>
+                                        <p className="text-lg leading-relaxed text-teal-800 dark:text-teal-200">
+                                            Navigate to the <Link href="/dashboard" className="font-semibold underline">Dashboard</Link> and fill in your details:
+                                        </p>
+                                        <ul className="mt-4 space-y-2 text-teal-800 dark:text-teal-200">
+                                            <li className="flex items-start">
+                                                <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                                                <span><strong>Name:</strong> Your display name</span>
+                                            </li>
+                                            <li className="flex items-start">
+                                                <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                                                <span><strong>GitHub Username:</strong> Required for fetching your stats</span>
+                                            </li>
+                                            <li className="flex items-start">
+                                                <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                                                <span><strong>Profile Picture URL:</strong> Custom image (optional, defaults to GitHub avatar)</span>
+                                            </li>
+                                            <li className="flex items-start">
+                                                <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                                                <span><strong>Twitter Handle:</strong> Your Twitter/X username</span>
+                                            </li>
+                                            <li className="flex items-start">
+                                                <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                                                <span><strong>LinkedIn Username:</strong> Your LinkedIn profile name</span>
+                                            </li>
+                                            <li className="flex items-start">
+                                                <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                                                <span><strong>Portfolio URL:</strong> Your personal website or portfolio</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="relative overflow-hidden shadow-2xl rounded-2xl">
+                                        <Image
+                                            src="/guide1.png"
+                                            alt="Open Readme Dashboard Interface"
+                                            width={1200}
+                                            height={700}
+                                            className="object-cover w-full"
+                                            priority
+                                        />
+                                    </div>
+
+                                    <div className="p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl">
+                                        <h3 className="mb-3 text-xl font-semibold text-blue-900 dark:text-blue-100">
+                                            Step 2: Save Your Data
+                                        </h3>
+                                        <p className="text-lg text-blue-900 dark:text-blue-100">
+                                            Click the save button (💾) next to each field to save your information.
+                                            Your data will be stored and used by our automated workflow to generate your profile image daily.
+                                        </p>
+                                    </div>
+
+                                    <div className="p-6 border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 rounded-xl">
+                                        <h3 className="mb-3 text-xl font-semibold text-purple-900 dark:text-purple-100">
+                                            🤖 Automated Daily Updates
+                                        </h3>
+                                        <p className="text-lg text-purple-900 dark:text-purple-100">
+                                            Once your profile is saved, our GitHub workflow automatically generates and updates
+                                            your profile image <strong>every day at midnight UTC</strong> with your latest GitHub stats!
+                                        </p>
+                                    </div>
                                 </div>
                             </motion.div>
                         </section>
 
-                        {/* After Generation Section */}
-                        {/*<section id="after-you-have-generated-your-image" className="mb-20 scroll-mt-24">
+                        {/* Getting Your Profile Image */}
+                        <section id="getting-your-profile-image" className="mb-20 scroll-mt-24">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -259,63 +301,50 @@ export default function Component() {
                                 className="space-y-8"
                             >
                                 <h2 className="text-3xl font-bold sm:text-4xl lg:text-5xl">
-                                    After Image Generation
+                                    Getting Your Profile Image
                                 </h2>
                                 <div className="space-y-6">
-                                    <p className="text-lg leading-relaxed text-muted-foreground">
-                                        Once you have generated your image, you will receive an embed link
-                                        for your GitHub README.md, along with two essential setup files:
-                                    </p>
-
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        <div className="flex items-center p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
-                                            <Image
-                                                width={24}
-                                                height={24}
-                                                src="/typescript.svg"
-                                                alt="TypeScript"
-                                                className="w-6 h-6"
-                                            />
-                                            <span className="flex-1 font-medium">get-openreadme.ts</span>
-                                            <Download className="w-5 h-5 text-emerald-500" />
+                                    <div className="p-6 border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 rounded-xl">
+                                        <h3 className="mb-3 text-xl font-semibold text-emerald-900 dark:text-emerald-100">
+                                            📸 Your Profile Image URL
+                                        </h3>
+                                        <p className="mb-4 text-lg leading-relaxed text-emerald-800 dark:text-emerald-200">
+                                            After saving your profile data, your image will be available at a static URL.
+                                            You can find your unique image link in the dashboard after the first generation.
+                                        </p>
+                                        <div className="p-4 font-mono text-sm bg-white rounded-lg dark:bg-black/40">
+                                            <code className="text-emerald-700 dark:text-emerald-300">
+                                                https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/[your-hash-id].png
+                                            </code>
                                         </div>
+                                    </div>
 
-                                        <div className="flex items-center p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
-                                            <File className="w-6 h-6 text-red-500" />
-                                            <span className="flex-1 font-medium">update-openreadme.yml</span>
-                                            <Download className="w-5 h-5 text-emerald-500" />
-                                        </div>
+                                    <div className="p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl">
+                                        <h3 className="mb-3 text-xl font-semibold text-blue-900 dark:text-blue-100">
+                                            🔄 Automatic Updates
+                                        </h3>
+                                        <p className="text-lg text-blue-900 dark:text-blue-100">
+                                            Your profile image updates automatically every day at midnight UTC.
+                                            The URL stays the same, but the image content refreshes with your latest GitHub statistics!
+                                        </p>
                                     </div>
 
                                     <div className="p-6 border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 rounded-xl">
+                                        <h3 className="mb-3 text-xl font-semibold text-amber-900 dark:text-amber-100">
+                                            💡 Pro Tip
+                                        </h3>
                                         <p className="text-amber-900 dark:text-amber-100">
-                                            <strong>Important:</strong> Do not change the file names.
-                                            The setup will not work if you rename these files.
+                                            You can update your profile information (Twitter, LinkedIn, profile picture, etc.) anytime
+                                            by going back to the dashboard and saving your changes. The workflow will use your updated
+                                            data in the next daily generation.
                                         </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <p className="text-lg text-muted-foreground">
-                                            Create the following folder structure in your repository:
-                                        </p>
-                                        <div className="p-6 bg-muted/20 rounded-xl w-fit">
-                                            <Tree contentTree="Your Repository">
-                                                <Tree contentTree="README.md" />
-                                                <Tree contentTree="get-openreadme.ts" />
-                                                <Tree contentTree=".github" defaultCollapsed={false}>
-                                                    <Tree contentTree="workflows">
-                                                        <Tree contentTree="update-openreadme.yml" />
-                                                    </Tree>
-                                                </Tree>
-                                            </Tree>
-                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
-                        </section>*/}
+                        </section>
 
-                        {/* GitHub Settings Section */}
-                        {/*<section id="github-settings" className="mb-20 scroll-mt-24">
+                        {/* Using Your Profile Image Section */}
+                        <section id="using-your-profile-image" className="mb-20 scroll-mt-24">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -324,40 +353,66 @@ export default function Component() {
                                 className="space-y-8"
                             >
                                 <h2 className="text-3xl font-bold sm:text-4xl lg:text-5xl">
-                                    Repository Settings
+                                    Using Your Profile Image
                                 </h2>
                                 <div className="space-y-6">
                                     <p className="text-lg leading-relaxed text-muted-foreground">
-                                        Enable <strong>Write Permissions</strong> in your repository settings.
-                                        This is required for the action to update your README automatically.
+                                        Add your Open Readme profile image to your GitHub profile or any repository:
                                     </p>
 
-                                    <nav className="flex items-center p-4 space-x-2 text-sm rounded-lg bg-muted/20">
-                                        <div className="flex items-center font-medium text-red-500">
-                                            <Settings className="w-4 h-4 mr-2" />
-                                            Settings
+                                    <div className="space-y-4">
+                                        <div className="flex items-start p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
+                                            <div className="flex items-center justify-center w-8 h-8 text-white bg-teal-500 rounded-full shrink-0">
+                                                1
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">Copy Your Image URL</p>
+                                                <p className="text-sm text-muted-foreground">Get your unique image URL from the dashboard after generation</p>
+                                            </div>
                                         </div>
-                                        <span className="text-muted-foreground">→</span>
-                                        <div className="flex items-center text-muted-foreground">
-                                            <CirclePlay className="w-4 h-4 mr-2" />
-                                            Actions
-                                        </div>
-                                        <span className="text-muted-foreground">→</span>
-                                        <span className="text-muted-foreground">General</span>
-                                    </nav>
 
-                                    <div className="relative overflow-hidden shadow-2xl rounded-2xl">
-                                        <Image
-                                            width={1200}
-                                            height={800}
-                                            src="/guide2.png"
-                                            alt="GitHub Actions Settings"
-                                            className="object-cover w-full"
-                                        />
+                                        <div className="flex items-start p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
+                                            <div className="flex items-center justify-center w-8 h-8 text-white bg-teal-500 rounded-full shrink-0">
+                                                2
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">Add to README.md</p>
+                                                <p className="text-sm text-muted-foreground mb-3">
+                                                    Use markdown to embed your image in any README file:
+                                                </p>
+                                                <div className="p-3 overflow-x-auto font-mono text-sm bg-white rounded dark:bg-black/40">
+                                                    <code className="text-purple-600 dark:text-purple-400">
+                                                        ![Open Readme](https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/[your-hash-id].png)
+                                                    </code>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
+                                            <div className="flex items-center justify-center w-8 h-8 text-white bg-teal-500 rounded-full shrink-0">
+                                                3
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">Commit and Push</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Save your README.md and push to GitHub. Your profile image will display with automatic daily updates!
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/20 dark:border-indigo-800 rounded-xl">
+                                        <h3 className="mb-3 text-xl font-semibold text-indigo-900 dark:text-indigo-100">
+                                            🎨 Customization Options
+                                        </h3>
+                                        <p className="text-lg text-indigo-900 dark:text-indigo-100">
+                                            Want to customize your profile theme? Visit the dashboard to select from multiple
+                                            beautiful themes and see a live preview before saving!
+                                        </p>
                                     </div>
                                 </div>
                             </motion.div>
-                        </section>*/}
+                        </section>
 
                         {/* Finale Section */}
                         <section id="finale" className="mb-20 scroll-mt-24">
@@ -472,7 +527,7 @@ export default function Component() {
             {showScrollTop && (
                 <button
                     onClick={scrollToTop}
-                    className="fixed z-40 p-3 transition-opacity duration-200 bg-teal-500 rounded-full shadow-lg bottom-6 left-6 text-teal-500-foreground"
+                    className="fixed z-40 p-3 transition-opacity duration-200 bg-transparent rounded-full shadow-lg bottom-6 right-6 text-teal-500 border border-teal-500"
                 >
                     <ArrowUp className="w-5 h-5" />
                 </button>

@@ -24,7 +24,8 @@ export default function AboutPage() {
                         </h1>
                         <p className="max-w-3xl mx-auto text-xl leading-relaxed text-muted-foreground">
                             Learn about Open Readme, the Open Dev Society initiative behind it, and the project lead{" "}
-                            <span className="font-semibold text-foreground">@ravixalgorithm</span>.
+                            <span className="font-semibold text-teal-500">@ravixalgorithm</span>. 
+                            Built with ❤️ for the developer community.
                         </p>
                     </div>
 
@@ -36,12 +37,39 @@ export default function AboutPage() {
                                 <div className="space-y-4">
                                     <h2 className="text-3xl font-bold md:text-4xl">Open Readme</h2>
                                     <p className="text-lg leading-relaxed text-muted-foreground">
-                                        A modern, themeable, open-source way to showcase your GitHub profile with a beautiful bento grid.
-                                        Generate a shareable image and embed it in your README effortlessly.
+                                        Transform your GitHub profile with a stunning, auto-updating bento grid. 
+                                        Open Readme generates beautiful profile images that showcase your stats, contributions, 
+                                        and social links—all updated automatically every day.
                                     </p>
+                                    <div className="space-y-3 pt-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-2 h-2 mt-2 rounded-full bg-teal-500 shrink-0"></div>
+                                            <p className="text-base text-muted-foreground">
+                                                <strong className="text-foreground">Automated Updates:</strong> Your profile image refreshes daily with latest GitHub stats
+                                            </p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-2 h-2 mt-2 rounded-full bg-teal-500 shrink-0"></div>
+                                            <p className="text-base text-muted-foreground">
+                                                <strong className="text-foreground">Multiple Themes:</strong> Choose from beautiful, customizable themes
+                                            </p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-2 h-2 mt-2 rounded-full bg-teal-500 shrink-0"></div>
+                                            <p className="text-base text-muted-foreground">
+                                                <strong className="text-foreground">Static URLs:</strong> One link that always stays current
+                                            </p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-2 h-2 mt-2 rounded-full bg-teal-500 shrink-0"></div>
+                                            <p className="text-base text-muted-foreground">
+                                                <strong className="text-foreground">100% Open Source:</strong> Free to use, customize, and contribute
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex flex-wrap gap-4">
-                                    <Button asChild size="lg" className="font-medium">
+                                    <Button asChild size="lg" className="font-medium bg-teal-500 hover:opacity-80">
                                         <Link href="/guide">
                                             Read Guide
                                         </Link>
@@ -49,7 +77,7 @@ export default function AboutPage() {
                                     <Button asChild variant="outline" size="lg" className="font-medium">
                                         <a href="https://github.com/open-dev-society/openreadme" target="_blank" rel="noreferrer">
                                             <Github className="mr-2 size-5" />
-                                            GitHub
+                                            Project Repo
                                         </a>
                                     </Button>
                                 </div>
@@ -79,21 +107,25 @@ export default function AboutPage() {
                                 <div className="space-y-4">
                                     <h2 className="text-3xl font-bold md:text-4xl">Open Dev Society</h2>
                                     <p className="text-lg leading-relaxed text-muted-foreground">
-                                        A community initiative focused on building open, transparent, and developer-first tools.
-                                        Open Readme is proudly built under ODS to foster collaboration and innovation.
+                                        A community-driven initiative building open, transparent, and developer-first tools. 
+                                        We believe in the power of open source to democratize technology and empower developers worldwide.
+                                    </p>
+                                    <p className="text-lg leading-relaxed text-muted-foreground">
+                                        Open Readme is proudly built under ODS, embodying our mission to create accessible, 
+                                        high-quality tools that the entire developer community can use, improve, and learn from.
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-4">
-                                    <Button asChild variant="outline" size="lg" className="font-medium">
-                                        <Link href="https://github.com/open-dev-society/" target="_blank" rel="noreferrer">
-                                            Visit Website
-                                        </Link>
-                                    </Button>
-                                    <Button asChild size="lg" className="font-medium">
-                                        <a href="https://github.com/open-dev-society/openreadme" target="_blank" rel="noreferrer">
+                                    <Button asChild size="lg" className="font-medium hover:opacity-80 border">
+                                        <a href="https://github.com/open-dev-society/" target="_blank" rel="noreferrer">
                                             <Github className="mr-2 size-5" />
-                                            Project Repo
+                                            GitHub
                                         </a>
+                                    </Button>
+                                    <Button asChild variant="outline" size="lg" className="font-medium bg-[#5865F2] hover:opacity-80 text-white">
+                                        <Link href="https://github.com/open-dev-society/" target="_blank" rel="noreferrer">
+                                            Join on Discord
+                                        </Link>
                                     </Button>
                                 </div>
                             </div>
@@ -111,8 +143,12 @@ export default function AboutPage() {
                                             @ravixalgorithm
                                         </div>
                                         <p className="text-lg leading-relaxed text-muted-foreground">
-                                            Maintainer of Open Readme. Passionate about building delightful developer experiences
-                                            and transparent tooling that empowers the open source community.
+                                            Creator and maintainer of Open Readme. Passionate about building delightful developer experiences, 
+                                            beautiful UIs, and transparent tooling that empowers the open source community.
+                                        </p>
+                                        <p className="text-base leading-relaxed text-muted-foreground">
+                                            "I built Open Readme to make it easy for developers to showcase their work beautifully. 
+                                            It's completely free, open source, and built with the community in mind. Let's make GitHub profiles awesome together!" 🚀
                                         </p>
                                     </div>
                                     <div className="flex flex-wrap gap-4">
