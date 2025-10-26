@@ -147,8 +147,8 @@ export default function AboutPage() {
                                             beautiful UIs, and transparent tooling that empowers the open source community.
                                         </p>
                                         <p className="text-base leading-relaxed text-muted-foreground">
-                                            "I built Open Readme to make it easy for developers to showcase their work beautifully. 
-                                            It's completely free, open source, and built with the community in mind. Let's make GitHub profiles awesome together!" 🚀
+                                            &ldquo;I built Open Readme to make it easy for developers to showcase their work beautifully. 
+                                            It&rsquo;s completely free, open source, and built with the community in mind. Let&rsquo;s make GitHub profiles awesome together!&rdquo; 🚀
                                         </p>
                                     </div>
                                     <div className="flex flex-wrap gap-4">
