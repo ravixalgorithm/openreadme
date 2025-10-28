@@ -95,10 +95,10 @@ export default function Component() {
             </div>
 
             {/* Main Content Layout */}
-            <div className="px-4 pb-20 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div className="relative flex gap-8 lg:gap-12">
+            <div className="px-4 pb-20 mx-auto max-w-7xl sm:px-6 lg:px-8 overflow-hidden">
+                <div className="relative flex flex-col xl:flex-row gap-8 lg:gap-12">
                     {/* Main Content */}
-                    <main className="flex-1 max-w-4xl">
+                    <main className="flex-1 w-full xl:max-w-4xl min-w-0">
                         {/* Introduction Section */}
                         <section id="introduction" className="mb-20 scroll-mt-24">
                             <motion.div
@@ -107,14 +107,14 @@ export default function Component() {
                                 transition={{ duration: 0.5 }}
                                 className="space-y-8"
                             >
-                                <div className="p-8 bg-gradient-to-r from-muted/30 to-muted/10 rounded-2xl">
-                                    <p className="mb-8 text-lg leading-relaxed sm:text-xl text-muted-foreground">
+                                <div className="p-4 sm:p-6 md:p-8 bg-gradient-to-r from-muted/30 to-muted/10 rounded-2xl overflow-hidden">
+                                    <p className="mb-8 text-base leading-relaxed sm:text-lg md:text-xl text-muted-foreground break-words">
                                         Hey there, GitHub superstar! Ready to give your profile some
                                         serious swagger? With Open Readme, you'll turn your profile
                                         into a dynamic, eye-catching showcase that updates
                                         automatically with your latest GitHub stats.
                                     </p>
-                                    <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                                         {[
                                             "Customizable grid layout",
                                             "Automatic stat updates",
@@ -128,7 +128,7 @@ export default function Component() {
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                                                className="flex items-center gap-3 text-base sm:text-lg"
+                                                className="flex items-center gap-3 text-base sm:text-lg break-words"
                                             >
                                                 <Check className="w-5 h-5 text-emerald-500 shrink-0" />
                                                 {text}
@@ -148,18 +148,18 @@ export default function Component() {
                                 viewport={{ once: true }}
                                 className="space-y-8"
                             >
-                                <h2 className="text-3xl font-bold sm:text-4xl lg:text-5xl">
+                                <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl break-words">
                                     Original Concept & Inspiration
                                 </h2>
-                                <div className="p-8 border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 dark:border-purple-800 rounded-2xl">
+                                <div className="p-4 sm:p-6 md:p-8 border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 dark:border-purple-800 rounded-2xl overflow-hidden">
                                     <div className="space-y-6">
-                                        <p className="text-lg leading-relaxed text-purple-900 dark:text-purple-100">
+                                        <p className="text-base sm:text-lg leading-relaxed text-purple-900 dark:text-purple-100 break-words">
                                             Open Readme is inspired by the amazing concept from{" "}
                                             <a
                                                 href="https://opbento.edgexhq.tech"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="font-semibold text-purple-600 underline transition-colors dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 decoration-2 underline-offset-2"
+                                                className="font-semibold text-purple-600 underline transition-colors dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 decoration-2 underline-offset-2 break-words"
                                             >
                                                 OpBento by EdgeX HQ
                                             </a>
@@ -167,23 +167,23 @@ export default function Component() {
                                             that developers could freely use, customize, and contribute to.
                                         </p>
 
-                                        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                                <span className="font-medium text-purple-900 dark:text-purple-100">
+                                        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center flex-wrap">
+                                            <div className="flex items-center gap-3 flex-shrink-0">
+                                                <div className="w-3 h-3 bg-purple-500 rounded-full flex-shrink-0"></div>
+                                                <span className="font-medium text-purple-900 dark:text-purple-100 break-words">
                                                     Built under Open Dev Society
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-                                                <span className="font-medium text-purple-900 dark:text-purple-100">
+                                            <div className="flex items-center gap-3 flex-shrink-0">
+                                                <div className="w-3 h-3 bg-pink-500 rounded-full flex-shrink-0"></div>
+                                                <span className="font-medium text-purple-900 dark:text-purple-100 break-words">
                                                     Community-driven development
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <div className="p-6 border bg-white/50 dark:bg-black/20 rounded-xl border-purple-200/50 dark:border-purple-700/50">
-                                            <p className="text-base leading-relaxed text-purple-800 dark:text-purple-200">
+                                        <div className="p-4 sm:p-6 border bg-white/50 dark:bg-black/20 rounded-xl border-purple-200/50 dark:border-purple-700/50 overflow-hidden">
+                                            <p className="text-base leading-relaxed text-purple-800 dark:text-purple-200 break-words">
                                                 <strong>Why Open Source?</strong> We believe amazing tools should be accessible to everyone.
                                                 By making Open Readme open source, we're empowering the developer community to build,
                                                 customize, and improve upon this concept together.
@@ -191,12 +191,12 @@ export default function Component() {
                                         </div>
 
                                         <div className="flex flex-wrap gap-4">
-                                            <Button asChild className="text-white bg-purple-600 hover:bg-purple-700">
+                                            <Button asChild className="text-white bg-purple-600 hover:bg-purple-700 text-sm sm:text-base">
                                                 <a href="https://opbento.edgexhq.tech" target="_blank" rel="noopener noreferrer">
                                                     Visit OpBento (Original Inspiration)
                                                 </a>
                                             </Button>
-                                            <Button asChild variant="outline" className="text-purple-700 border-purple-300 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-950/30">
+                                            <Button asChild variant="outline" className="text-purple-700 border-purple-300 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-950/30 text-sm sm:text-base">
                                                 <a href="https://github.com/ravixalgorithm/openreadme" target="_blank" rel="noopener noreferrer">
                                                     <Github className="w-4 h-4 mr-2" />
                                                     Open Readme Repository
@@ -222,37 +222,37 @@ export default function Component() {
                                 </h2>
 
                                 <div className="space-y-6">
-                                    <div className="p-6 border border-teal-200 bg-teal-50 dark:bg-teal-950/20 dark:border-teal-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border border-teal-200 bg-teal-50 dark:bg-teal-950/20 dark:border-teal-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-4 text-2xl font-semibold text-teal-900 dark:text-teal-100">
                                             Step 1: Fill Your Profile Information
                                         </h3>
-                                        <p className="text-lg leading-relaxed text-teal-800 dark:text-teal-200">
+                                        <p className="text-lg leading-relaxed text-teal-800 dark:text-teal-200 break-words">
                                             Navigate to the <Link href="/dashboard" className="font-semibold underline">Dashboard</Link> and fill in your details:
                                         </p>
                                         <ul className="mt-4 space-y-2 text-teal-800 dark:text-teal-200">
                                             <li className="flex items-start">
                                                 <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                                                <span><strong>Name:</strong> Your display name</span>
+                                                <span className="break-words"><strong>Name:</strong> Your display name</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                                                <span><strong>GitHub Username:</strong> Required for fetching your stats</span>
+                                                <span className="break-words"><strong>GitHub Username:</strong> Required for fetching your stats</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                                                <span><strong>Profile Picture URL:</strong> Custom image (optional, defaults to GitHub avatar)</span>
+                                                <span className="break-words"><strong>Profile Picture URL:</strong> Custom image (optional, defaults to GitHub avatar)</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                                                <span><strong>Twitter Handle:</strong> Your Twitter/X username</span>
+                                                <span className="break-words"><strong>Twitter Handle:</strong> Your Twitter/X username</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                                                <span><strong>LinkedIn Username:</strong> Your LinkedIn profile name</span>
+                                                <span className="break-words"><strong>LinkedIn Username:</strong> Your LinkedIn profile name</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <Check className="w-5 h-5 mr-2 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                                                <span><strong>Portfolio URL:</strong> Your personal website or portfolio</span>
+                                                <span className="break-words"><strong>Portfolio URL:</strong> Your personal website or portfolio</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -268,21 +268,21 @@ export default function Component() {
                                         />
                                     </div>
 
-                                    <div className="p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-3 text-xl font-semibold text-blue-900 dark:text-blue-100">
                                             Step 2: Save Your Data
                                         </h3>
-                                        <p className="text-lg text-blue-900 dark:text-blue-100">
+                                        <p className="text-lg text-blue-900 dark:text-blue-100 break-words">
                                             Click the save button (💾) next to each field to save your information.
                                             Your data will be stored and used by our automated workflow to generate your profile image daily.
                                         </p>
                                     </div>
 
-                                    <div className="p-6 border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-3 text-xl font-semibold text-purple-900 dark:text-purple-100">
                                             🤖 Automated Daily Updates
                                         </h3>
-                                        <p className="text-lg text-purple-900 dark:text-purple-100">
+                                        <p className="text-lg text-purple-900 dark:text-purple-100 break-words">
                                             Once your profile is saved, our GitHub workflow automatically generates and updates
                                             your profile image <strong>every day at midnight UTC</strong> with your latest GitHub stats!
                                         </p>
@@ -304,36 +304,36 @@ export default function Component() {
                                     Getting Your Profile Image
                                 </h2>
                                 <div className="space-y-6">
-                                    <div className="p-6 border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-3 text-xl font-semibold text-emerald-900 dark:text-emerald-100">
                                             📸 Your Profile Image URL
                                         </h3>
-                                        <p className="mb-4 text-lg leading-relaxed text-emerald-800 dark:text-emerald-200">
+                                        <p className="mb-4 text-lg leading-relaxed text-emerald-800 dark:text-emerald-200 break-words">
                                             After saving your profile data, your image will be available at a static URL.
                                             You can find your unique image link in the dashboard after the first generation.
                                         </p>
-                                        <div className="p-4 font-mono text-sm bg-white rounded-lg dark:bg-black/40">
-                                            <code className="text-emerald-700 dark:text-emerald-300">
+                                        <div className="p-4 font-mono text-xs sm:text-sm bg-white rounded-lg dark:bg-black/40 overflow-x-auto">
+                                            <code className="text-emerald-700 dark:text-emerald-300 break-all">
                                                 https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/[your-hash-id].png
                                             </code>
                                         </div>
                                     </div>
 
-                                    <div className="p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-3 text-xl font-semibold text-blue-900 dark:text-blue-100">
                                             🔄 Automatic Updates
                                         </h3>
-                                        <p className="text-lg text-blue-900 dark:text-blue-100">
+                                        <p className="text-lg text-blue-900 dark:text-blue-100 break-words">
                                             Your profile image updates automatically every day at midnight UTC.
                                             The URL stays the same, but the image content refreshes with your latest GitHub statistics!
                                         </p>
                                     </div>
 
-                                    <div className="p-6 border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-3 text-xl font-semibold text-amber-900 dark:text-amber-100">
                                             💡 Pro Tip
                                         </h3>
-                                        <p className="text-amber-900 dark:text-amber-100">
+                                        <p className="text-amber-900 dark:text-amber-100 break-words">
                                             You can update your profile information (Twitter, LinkedIn, profile picture, etc.) anytime
                                             by going back to the dashboard and saving your changes. The workflow will use your updated
                                             data in the next daily generation.
@@ -356,56 +356,56 @@ export default function Component() {
                                     Using Your Profile Image
                                 </h2>
                                 <div className="space-y-6">
-                                    <p className="text-lg leading-relaxed text-muted-foreground">
+                                    <p className="text-lg leading-relaxed text-muted-foreground break-words">
                                         Add your Open Readme profile image to your GitHub profile or any repository:
                                     </p>
 
                                     <div className="space-y-4">
-                                        <div className="flex items-start p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
+                                        <div className="flex items-start p-3 sm:p-4 space-x-3 sm:space-x-4 border bg-secondary/30 border-secondary rounded-xl overflow-hidden">
                                             <div className="flex items-center justify-center w-8 h-8 text-white bg-teal-500 rounded-full shrink-0">
                                                 1
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="font-medium">Copy Your Image URL</p>
-                                                <p className="text-sm text-muted-foreground">Get your unique image URL from the dashboard after generation</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium break-words">Copy Your Image URL</p>
+                                                <p className="text-sm text-muted-foreground break-words">Get your unique image URL from the dashboard after generation</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
+                                        <div className="flex items-start p-3 sm:p-4 space-x-3 sm:space-x-4 border bg-secondary/30 border-secondary rounded-xl overflow-hidden">
                                             <div className="flex items-center justify-center w-8 h-8 text-white bg-teal-500 rounded-full shrink-0">
                                                 2
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="font-medium">Add to README.md</p>
-                                                <p className="text-sm text-muted-foreground mb-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium break-words">Add to README.md</p>
+                                                <p className="text-sm text-muted-foreground mb-3 break-words">
                                                     Use markdown to embed your image in any README file:
                                                 </p>
-                                                <div className="p-3 overflow-x-auto font-mono text-sm bg-white rounded dark:bg-black/40">
-                                                    <code className="text-purple-600 dark:text-purple-400">
+                                                <div className="p-3 overflow-x-auto font-mono text-xs sm:text-sm bg-white rounded dark:bg-black/40">
+                                                    <code className="text-purple-600 dark:text-purple-400 break-all">
                                                         ![Open Readme](https://raw.githubusercontent.com/ravixalgorithm/openreadme-images/main/[your-hash-id].png)
                                                     </code>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start p-4 space-x-4 border bg-secondary/30 border-secondary rounded-xl">
+                                        <div className="flex items-start p-3 sm:p-4 space-x-3 sm:space-x-4 border bg-secondary/30 border-secondary rounded-xl overflow-hidden">
                                             <div className="flex items-center justify-center w-8 h-8 text-white bg-teal-500 rounded-full shrink-0">
                                                 3
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="font-medium">Commit and Push</p>
-                                                <p className="text-sm text-muted-foreground">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium break-words">Commit and Push</p>
+                                                <p className="text-sm text-muted-foreground break-words">
                                                     Save your README.md and push to GitHub. Your profile image will display with automatic daily updates!
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-6 border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/20 dark:border-indigo-800 rounded-xl">
+                                    <div className="p-4 sm:p-6 border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/20 dark:border-indigo-800 rounded-xl overflow-hidden">
                                         <h3 className="mb-3 text-xl font-semibold text-indigo-900 dark:text-indigo-100">
                                             🎨 Customization Options
                                         </h3>
-                                        <p className="text-lg text-indigo-900 dark:text-indigo-100">
+                                        <p className="text-lg text-indigo-900 dark:text-indigo-100 break-words">
                                             Want to customize your profile theme? Visit the dashboard to select from multiple
                                             beautiful themes and see a live preview before saving!
                                         </p>
@@ -427,14 +427,14 @@ export default function Component() {
                                     And That's It! 🎉
                                 </h2>
                                 <div className="space-y-6">
-                                    <p className="text-lg leading-relaxed text-muted-foreground">
+                                    <p className="text-lg leading-relaxed text-muted-foreground break-words">
                                         Congratulations on setting up Open Readme! Your GitHub profile now
                                         has a unique, eye-catching grid that showcases your projects,
                                         updates with your latest activity, and is ready to impress anyone who visits.
                                     </p>
 
-                                    <div className="p-8 border bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800 rounded-xl">
-                                        <p className="text-lg text-center text-emerald-900 dark:text-emerald-100">
+                                    <div className="p-4 sm:p-6 md:p-8 border bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800 rounded-xl overflow-hidden">
+                                        <p className="text-lg text-center text-emerald-900 dark:text-emerald-100 break-words">
                                             If you found this guide helpful, please consider giving it a
                                             ⭐ on GitHub. It helps others discover the project and motivates
                                             continued development. Thank you! 🙏
@@ -527,7 +527,7 @@ export default function Component() {
             {showScrollTop && (
                 <button
                     onClick={scrollToTop}
-                    className="fixed z-40 p-3 transition-opacity duration-200 bg-transparent rounded-full shadow-lg bottom-6 right-6 text-teal-500 border border-teal-500"
+                    className="fixed z-40 p-3 transition-opacity duration-200 bg-transparent rounded-full shadow-lg bottom-6 left-6 text-teal-500 border border-teal-500"
                 >
                     <ArrowUp className="w-5 h-5" />
                 </button>
